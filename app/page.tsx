@@ -4,6 +4,8 @@
 // live in client components under app/lesson/.
 import { VariantProvider } from "./lesson/VariantProvider";
 import { IntroMedia, StepImage } from "./lesson/LessonMedia";
+import { CompleteButton, StartButton } from "./lesson/LessonButtons";
+import { Receipt } from "./lesson/Receipt";
 
 export default function LessonPage() {
   return (
@@ -20,6 +22,8 @@ export default function LessonPage() {
             connection you feel the page's weight before you can begin. */}
         <IntroMedia />
         <StepImage name="diagram" alt="Diagram: commits on main, an idea branch, then a merge" width={1600} height={700} />
+
+        <StartButton />
 
         <section id="step-1">
           <h2>1. Start tracking a folder</h2>
@@ -54,8 +58,10 @@ git merge idea         # bring the idea into main`}</code></pre>
             <code>init</code>, <code>add</code>, <code>commit</code>, <code>switch</code>, <code>merge</code>. You now
             know the Git most people use every day.
           </p>
+          <CompleteButton />
         </section>
 
+        <Receipt />
       </main>
     </VariantProvider>
   );
