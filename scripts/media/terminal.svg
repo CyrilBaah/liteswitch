@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900">
+  <rect width="1600" height="900" rx="20" fill="#111827"/>
+  <rect width="1600" height="64" rx="20" fill="#1f2937"/>
+  <circle cx="44" cy="32" r="12" fill="#ef4444"/><circle cx="84" cy="32" r="12" fill="#f59e0b"/><circle cx="124" cy="32" r="12" fill="#22c55e"/>
+  <g font-family="Menlo, monospace" font-size="34">
+    <text x="60" y="160" fill="#4ade80">$ git status</text>
+    <text x="60" y="215" fill="#e5e7eb">On branch main</text>
+    <text x="60" y="270" fill="#e5e7eb">Changes not staged for commit:</text>
+    <text x="100" y="325" fill="#f87171">modified:   index.html</text>
+    <text x="60" y="420" fill="#4ade80">$ git add index.html</text>
+    <text x="60" y="490" fill="#4ade80">$ git commit -m "Fix the title"</text>
+    <text x="60" y="545" fill="#e5e7eb">[main 3f2a9c1] Fix the title</text>
+    <text x="60" y="600" fill="#e5e7eb"> 1 file changed, 1 insertion(+), 1 deletion(-)</text>
+    <text x="60" y="695" fill="#4ade80">$ git log --oneline</text>
+    <text x="60" y="750" fill="#fbbf24">3f2a9c1 <tspan fill="#e5e7eb">Fix the title</tspan></text>
+    <text x="60" y="805" fill="#fbbf24">a1b2c3d <tspan fill="#e5e7eb">first</tspan></text>
+  </g>
+</svg>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080">
+  <rect width="1920" height="1080" fill="#0f172a"/>
+  <text x="120" y="300" font-family="Arial" font-size="96" font-weight="bold" fill="#f8fafc">1. Start tracking</text>
+  <rect x="120" y="420" width="1680" height="360" rx="24" fill="#1e293b"/>
+  <text x="180" y="560" font-family="Menlo, monospace" font-size="64" fill="#4ade80">$ git init</text>
+  <text x="180" y="680" font-family="Arial" font-size="52" fill="#cbd5e1">Turns this folder into a repository</text>
+  <text x="120" y="960" font-family="Arial" font-size="40" fill="#64748b">Git in 10 minutes</text>
+</svg>
