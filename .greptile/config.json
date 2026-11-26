@@ -1,0 +1,42 @@
+{
+  "strictness": 2,
+  "instructions": "LiteSwitch serves a full or lite lesson page and runs a Flagsmith Experimentation A/B test for slow-connection visitors. Focus reviews on (1) correctness of the Flagsmith experiment logic: exposure, identity and events; (2) security: no secrets or keys committed; (3) accessibility of the lesson page. The owner must be able to explain every file, so prefer simple, commented code.",
+  "ignorePatterns": "node_modules/**\n.next/**\npublic/media/**\npublic/fonts/**\npackage-lock.json",
+  "rules": [
+    {
+      "id": "exposure-only-when-enrolled",
+      "rule": "trackExposureEvent('page_weight') may only be called when flag.experiment.inExperiment === true, once per page view, when the chosen variant is committed to the page. Never use getExperimentFlag (it records at read time) and never record an exposure after the 5 s timeout fallback served the full page.",
+      "scope": ["lib/flags.ts", "app/lesson/**"],
+      "severity": "high"
+    },
+    {
+      "id": "one-identity",
+      "rule": "The flag decision and every event (lesson_started, lesson_completed, page_bytes) must use the same ls_vid visitor id. Visitors who are not enrolled must not send events.",
+      "scope": ["lib/**", "app/lesson/**", "proxy.ts"],
+      "severity": "high"
+    },
+    {
+      "id": "only-slow-visitors-enter",
+      "rule": "Fast or unknown-connection visitors must get the full page without calling Flagsmith, so they never enter the experiment. The ?net= override must only work when NEXT_PUBLIC_SIM_MODE is 1.",
+      "scope": ["lib/**", "app/lesson/**"],
+      "severity": "high"
+    },
+    {
+      "id": "event-names-match-metrics",
+      "rule": "Event names must stay exactly lesson_started, lesson_completed and page_bytes; they must match the Flagsmith metric names character for character.",
+      "scope": ["lib/**", "app/**"],
+      "severity": "medium"
+    },
+    {
+      "id": "no-secrets",
+      "rule": "No secrets, API keys, tokens or .env files may be committed. The Flagsmith key is read only from NEXT_PUBLIC_FLAGSMITH_ENVIRONMENT_KEY; flag any hardcoded key or server-side secret.",
+      "severity": "high"
+    },
+    {
+      "id": "accessible-lesson",
+      "rule": "Interactive elements must be real buttons with accessible names, images need meaningful alt text, disabled or loading states must be visible as text, and video controls must stay keyboard reachable.",
+      "scope": ["app/**"],
+      "severity": "medium"
+    }
+  ]
+}
