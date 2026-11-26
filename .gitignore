@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+next-env.d.ts
+
+# env files: secrets live only in .env.local / Vercel, never in git
+.env*
+!.env.example
+
+# misc
+.DS_Store
+*.tsbuildinfo
+.vercel
+.gstack/
+
+# Claude Code personal settings (the shared .claude/settings.json IS committed)
+.claude/settings.local.json

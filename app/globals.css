@@ -1,0 +1,78 @@
+/* Web font for the FULL page. Declaring @font-face downloads nothing by
+   itself: the browser only fetches the file once some text USES the font,
+   which happens only when <html> gets the "webfont" class (full variant). */
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/inter-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/inter-latin-700-normal.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  --bg: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --code-bg: #f1f5f9;
+  --accent: #2563eb;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b1120;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --line: #1e293b;
+    --code-bg: #111827;
+    --accent: #60a5fa;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  /* LITE default: system fonts, zero download. */
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+}
+html.webfont body { font-family: "Inter", system-ui, sans-serif; }
+
+main { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+h1 { font-size: 2.2rem; line-height: 1.2; margin: 4px 0 12px; }
+h2 { margin-top: 32px; }
+.eyebrow { color: var(--muted); margin: 0; font-size: 0.9rem; }
+.lead { font-size: 1.1rem; }
+
+pre { background: var(--code-bg); padding: 12px 14px; border-radius: 8px; overflow-x: auto; }
+code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.95em; }
+
+/* Media boxes keep their size while loading, so nothing jumps around. */
+.media-slot { aspect-ratio: 16 / 9; background: var(--code-bg); border-radius: 8px; overflow: hidden; margin: 16px 0; }
+.media-slot video, .media-slot img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.img-slot { width: 100%; background: var(--code-bg); border-radius: 8px; margin: 16px 0; }
+.lesson-img { width: 100%; height: auto; display: block; border-radius: 8px; margin: 16px 0; }
+
+.poster { position: relative; width: 100%; height: 100%; padding: 0; border: 0; cursor: pointer; background: none; }
+.poster .play {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  background: rgba(15, 23, 42, 0.85); color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 0.95rem;
+}
+
+.cta {
+  font: inherit; font-weight: 700; padding: 12px 20px; margin: 8px 0;
+  border: 0; border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer;
+}
+.cta:disabled { opacity: 0.6; cursor: default; }
+
+.receipt { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); }
+.receipt p { margin: 4px 0; }
+.small { font-size: 0.85rem; color: var(--muted); }
+.debug { font-family: ui-monospace, Menlo, monospace; }
