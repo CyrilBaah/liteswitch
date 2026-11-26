@@ -24,7 +24,8 @@ In much of Africa and South Asia, 1 GB of mobile data costs a real share of mont
 
 1. `npm install`
 2. Copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_FLAGSMITH_ENVIRONMENT_KEY`.
-3. `npm run dev`, then open http://localhost:3000.
+3. In Flagsmith, turn on the warehouse, then create the `page_weight` flag with its full and lite JSON values, the three metrics, and the experiment. Without these, everyone gets the full page and no experiment events are sent. Step-by-step: "Flagsmith setup" in [docs/design.md](docs/design.md).
+4. `npm run dev`, then open http://localhost:3000.
 
 ## Results
 
