@@ -121,11 +121,12 @@ The credible interval is entirely above zero; it doesn't cross it. Flagsmith sho
 |---|---|---|
 | Enrolled visitors | 294 | 290 |
 | Started the lesson | 21 (7.1%) | **226 (77.9%)** |
-| Completed the lesson | 15 (5.1%) | **132 (45.5%)** |
+| Completed the lesson (scripted, see below) | 15 (5.1%) | 132 (45.5%) |
 | Content on screen before the visitor gave up | 21 of 294 | 226 of 290 |
 | Average time until content was visible (when it was) | 13.3 s | **6.2 s** |
 | Page weight, fully loaded | 6.50 MB ≈ GH₵0.744 | **0.19 MB ≈ GH₵0.022** |
 
+- **Completions are scripted, not measured.** The script clicks "Mark complete" for a random 60% of visitors who started, after 1–4 s. So completions follow starts by design (60% of 77.9% ≈ 46.7%; we got 45.5%), and they say nothing new about lite vs full. They only show that the `lesson_completed` event works. The real findings are lesson starts and time-to-content.
 - **Data and money saved:** about **6.3 MB and GH₵0.72 per visit**, fully loaded, at MTN Ghana's pay-as-you-go rate (GH₵0.1145/MB, no bundle). If a lite visitor taps play, the 360p video adds 0.24 MB (≈ GH₵0.027).
 - **Bytes before leaving** were 0.29 MB (full) vs 0.20 MB (lite) on average. That's low for full only because most full visitors gave up before the page finished loading, so it says little about page weight. The fully loaded numbers are the fair comparison.
 
