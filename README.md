@@ -2,6 +2,8 @@
 
 An open-source "data-saver mode" for websites: visitors on slow or Data-Saver connections get a lighter page, and a Flagsmith A/B test checks whether it actually helps.
 
+> Built for [Toggle Wars: The Flagsmith Experimentation Hackathon](https://www.wemakedevs.org/hackathons/flagsmith) by [WeMakeDevs](https://www.wemakedevs.org), Track 01: **Test Something Real**. Feature flags and experiments are powered by [Flagsmith](https://flagsmith.com).
+
 ## Problem
 
 In much of Africa and South Asia, 1 GB of mobile data costs a real share of monthly income. Browsers already report when a connection is slow or Data Saver is on, but most sites ignore that and send the same heavy page to everyone.
