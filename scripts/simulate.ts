@@ -2,14 +2,14 @@
 //
 // Run (never in CI, never against production):
 //   npx playwright install chromium        # once, downloads the browser
-//   npm run simulate                       # reads settings from the environment
+//   npm run simulate                       # runs this file with tsx (works on Node 20+)
 //
-// Environment (put secrets in .env.local, never in git):
+// Settings come from the environment or .env.local (secrets never go in git):
 //   SIM_URL                          sim preview URL (default below)
 //   VERCEL_AUTOMATION_BYPASS_SECRET  Vercel "Protection Bypass for Automation" secret
 //   TARGET_PER_VARIANT               stop when every variant has this many enrolled visitors (default 60)
 //   MAX_VISITS                       hard cap on visits, enrolled or not (default 400)
-//   CONCURRENCY                      browsers tabs running at once (default 4)
+//   CONCURRENCY                      browser tabs running at once (default 4)
 //
 // What it measures, honestly: each simulated visitor gets a random PATIENCE
 // budget (3-15 s, counted from navigation). It clicks "Start lesson" only if
@@ -17,18 +17,33 @@
 // button only unlocks once the lesson's intro media is on screen, so the result
 // comes from REAL load times on a throttled connection, not from a script that
 // always clicks. These are simulated visitors: report them apart from real ones.
-import { chromium, type Browser, type BrowserContext } from "playwright";
+import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
 
-const SIM_URL = process.env.SIM_URL ?? "https://liteswitch-git-sim-cyrilbaahs-projects.vercel.app/";
+// Load .env.local if it exists (process.loadEnvFile is built into Node 20.12+).
+try {
+  process.loadEnvFile(".env.local");
+} catch {
+  // No .env.local: rely on the shell environment.
+}
+
+/** Read a positive whole-number setting, or stop with a clear message (a typo must not silently skip visits). */
+function positiveInt(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw === undefined || raw === "") return fallback;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < 1) throw new Error(`${name} must be a whole number of at least 1, got "${raw}".`);
+  return value;
+}
+
+const SIM_URL = process.env.SIM_URL || "https://liteswitch-git-sim-cyrilbaahs-projects.vercel.app/";
 const BYPASS_SECRET = process.env.VERCEL_AUTOMATION_BYPASS_SECRET ?? "";
-const TARGET_PER_VARIANT = Number(process.env.TARGET_PER_VARIANT ?? 60);
-const MAX_VISITS = Number(process.env.MAX_VISITS ?? 400);
-const CONCURRENCY = Number(process.env.CONCURRENCY ?? 4);
 
 // Share of visitors who started the lesson that also click "Mark complete".
 const COMPLETE_SHARE = 0.6;
 const PATIENCE_MIN_MS = 3_000;
 const PATIENCE_MAX_MS = 15_000;
+// Stop if this many visits in a row fail (site down, protection blocking us...).
+const MAX_CONSECUTIVE_FAILURES = 10;
 
 // A 3G-like connection, applied with Chrome DevTools throttling so load times are real.
 // (The design doc's profile: ~400 kbit/s down, 400 ms round trip.)
@@ -42,10 +57,16 @@ const NETWORK_3G = {
 type Variant = "full" | "lite";
 type VisitResult = { enrolled: boolean; variant: Variant | null; started: boolean; completed: boolean };
 
-/** Refuse to run against production: simulated traffic must only reach the Development environment. */
+/**
+ * Allowlist, not blocklist: simulated traffic may only reach this project's Vercel
+ * PREVIEW deployments (they use the Development key) or a local dev server.
+ * Production, or any other host, is refused.
+ */
 function assertSafeTarget(url: URL): void {
-  if (url.hostname === "liteswitch.vercel.app") {
-    throw new Error("SIM_URL points at PRODUCTION. Simulated visitors may only hit the sim preview.");
+  const preview = /^liteswitch-git-[a-z0-9-]+-cyrilbaahs-projects\.vercel\.app$/.test(url.hostname);
+  const local = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+  if (!preview && !local) {
+    throw new Error(`SIM_URL host "${url.hostname}" is not a liteswitch preview or localhost. Refusing to send simulated visitors there.`);
   }
 }
 
@@ -62,6 +83,13 @@ async function newVisitorContext(browser: Browser, origin: string): Promise<Brow
     );
   }
   return context;
+}
+
+/** The footer's debug line, e.g. "page: lite · reason: flagsmith · in experiment: yes". "" if absent. */
+async function readFooter(page: Page): Promise<string> {
+  // Short, explicit timeout: an error or login page has no footer, and an
+  // untimed read would wait 30 s per visit (or hang a worker).
+  return (await page.locator(".debug").textContent({ timeout: 1_000 }).catch(() => "")) ?? "";
 }
 
 async function visit(browser: Browser, url: URL): Promise<VisitResult> {
@@ -83,38 +111,57 @@ async function visit(browser: Browser, url: URL): Promise<VisitResult> {
     target.searchParams.set("net", "3g");
     await page.goto(target.toString(), { waitUntil: "commit", timeout: 60_000 });
 
-    // Wait (within patience) for the variant decision, shown in the footer debug line.
-    const debug = page.locator(".debug");
-    await debug.filter({ hasNotText: "deciding" }).waitFor({ timeout: Math.max(1, deadline - Date.now()) }).catch(() => {});
-    const debugText = (await debug.textContent().catch(() => "")) ?? "";
-    result.enrolled = debugText.includes("in experiment: yes");
-    result.variant = debugText.includes("page: lite") ? "lite" : debugText.includes("page: full") ? "full" : null;
+    // A Vercel login page instead of the lesson means the bypass secret is missing or wrong.
+    if (new URL(page.url()).hostname === "vercel.com") {
+      throw new Error("Vercel protection blocked the visit: check VERCEL_AUTOMATION_BYPASS_SECRET.");
+    }
 
     // Click "Start lesson" only if it becomes clickable before patience runs out.
     const start = page.getByRole("button", { name: "Start lesson" });
-    const remaining = deadline - Date.now();
-    if (remaining > 0 && (await start.waitFor({ state: "visible", timeout: remaining }).then(() => true, () => false))) {
-      if (await start.isEnabled()) {
-        await start.click();
-        result.started = true;
-        if (Math.random() < COMPLETE_SHARE) {
-          await page.waitForTimeout(1_000 + Math.random() * 3_000); // a quick skim of the lesson
-          await page.getByRole("button", { name: "Mark complete" }).click();
-          result.completed = true;
-        }
+    const remaining = () => Math.max(1, deadline - Date.now());
+    const clickable = await start
+      .waitFor({ state: "visible", timeout: remaining() })
+      .then(async () => {
+        // Visible can still mean "Loading lesson…"-disabled; wait for enabled within patience.
+        await page.waitForFunction(
+          () => [...document.querySelectorAll("button")].some((b) => b.textContent === "Start lesson" && !b.disabled),
+          undefined,
+          { timeout: remaining() },
+        );
+        return true;
+      })
+      .catch(() => false);
+
+    if (clickable) {
+      await start.click();
+      result.started = true;
+      if (Math.random() < COMPLETE_SHARE) {
+        await page.waitForTimeout(1_000 + Math.random() * 3_000); // a quick skim of the lesson
+        await page.getByRole("button", { name: "Mark complete" }).click();
+        result.completed = true;
       }
     }
 
-    // Give the page a moment to send its events (they're flushed right after each one)
-    // before we close it, which also fires pagehide and sends page_bytes.
+    // Give the page a moment to send its events (they're flushed right after each one).
     await page.waitForTimeout(2_000);
+
+    // Read the footer LAST, just before leaving. A visitor whose patience ran out
+    // while the page was still "deciding" may have been enrolled by Flagsmith since,
+    // and we must count them the way Flagsmith will.
+    const footer = await readFooter(page);
+    result.enrolled = footer.includes("in experiment: yes");
+    result.variant = footer.includes("page: lite") ? "lite" : footer.includes("page: full") ? "full" : null;
   } finally {
-    await context.close();
+    await context.close(); // closing fires pagehide, which sends page_bytes
   }
   return result;
 }
 
 async function main(): Promise<void> {
+  // Read inside main() so a bad value prints one clear line, not a stack trace.
+  const TARGET_PER_VARIANT = positiveInt("TARGET_PER_VARIANT", 60);
+  const MAX_VISITS = positiveInt("MAX_VISITS", 400);
+  const CONCURRENCY = positiveInt("CONCURRENCY", 4);
   const url = new URL(SIM_URL);
   assertSafeTarget(url);
   if (!BYPASS_SECRET) console.warn("VERCEL_AUTOMATION_BYPASS_SECRET is empty: a protected preview will block every visit.");
@@ -125,6 +172,7 @@ async function main(): Promise<void> {
   };
   let visits = 0;
   let notEnrolled = 0;
+  let consecutiveFailures = 0;
   const done = () => tally.full.enrolled >= TARGET_PER_VARIANT && tally.lite.enrolled >= TARGET_PER_VARIANT;
 
   const browser = await chromium.launch();
@@ -135,11 +183,20 @@ async function main(): Promise<void> {
     const worker = async (): Promise<void> => {
       while (!done() && visits < MAX_VISITS) {
         visits++;
-        const r = await visit(browser, url).catch((error: unknown) => {
-          console.error("visit failed:", error instanceof Error ? error.message : error);
-          return null;
-        });
-        if (!r) continue;
+        let r: VisitResult;
+        try {
+          r = await visit(browser, url);
+          consecutiveFailures = 0;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          // Protection blocking us won't fix itself: stop now instead of burning visits.
+          if (message.includes("Vercel protection")) throw error;
+          console.error(`visit ${visits} failed: ${message}`);
+          if (++consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+            throw new Error(`${MAX_CONSECUTIVE_FAILURES} visits in a row failed: stopping. Is the sim preview up?`);
+          }
+          continue;
+        }
         if (!r.enrolled || !r.variant) {
           notEnrolled++;
           // Nobody enrolled after 10 visits: the experiment probably isn't running.
@@ -158,15 +215,14 @@ async function main(): Promise<void> {
     await Promise.all(Array.from({ length: CONCURRENCY }, worker));
   } finally {
     await browser.close();
+    console.log("\nSIMULATED visitors (report separately from real ones):");
+    for (const variant of ["full", "lite"] as const) {
+      const { enrolled, started, completed } = tally[variant];
+      const pct = (n: number) => (enrolled ? ((100 * n) / enrolled).toFixed(1) : "0.0");
+      console.log(`  ${variant}: ${enrolled} enrolled, ${started} started (${pct(started)}%), ${completed} completed (${pct(completed)}%)`);
+    }
+    console.log(`  visits: ${visits}, not enrolled: ${notEnrolled}`);
   }
-
-  console.log("\nSIMULATED visitors (report separately from real ones):");
-  for (const variant of ["full", "lite"] as const) {
-    const { enrolled, started, completed } = tally[variant];
-    const pct = (n: number) => (enrolled ? ((100 * n) / enrolled).toFixed(1) : "0.0");
-    console.log(`  ${variant}: ${enrolled} enrolled, ${started} started (${pct(started)}%), ${completed} completed (${pct(completed)}%)`);
-  }
-  console.log(`  visits: ${visits}, not enrolled: ${notEnrolled}`);
 }
 
 main().catch((error: unknown) => {
