@@ -13,7 +13,7 @@ In much of Africa and South Asia, 1 GB of mobile data costs a real share of mont
 - The browser reads `navigator.connection` (2G/3G, Data Saver). The `Save-Data` header is mirrored into a cookie by `proxy.ts`.
 - Visitors on slow connections get a **full** or **lite** version of the lesson "Git in 10 minutes". Fast and unknown visitors always get full.
 - Lite means a tap-to-load 360p video instead of autoplay HD, small lazy images and system fonts.
-- A footer "data-cost receipt" shows how many MB the page used and what that costs in FCFA.
+- A footer "data-cost receipt" shows how many MB the page used and what that costs in Ghana cedis at MTN Ghana's pay-as-you-go rate (GH₵0.1145/MB, no bundle).
 
 ## How Flagsmith is used
 
