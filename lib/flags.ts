@@ -77,9 +77,12 @@ export async function decidePageWeight(visitorId: string, traits: ConnectionTrai
     if (result === "timeout") return fallback("timeout");
 
     const flag = flagsmith.getAllFlags().page_weight; // normal read: records nothing
-    const config = parsePageWeight(flag?.value) ?? FULL; // empty/odd value -> full
-    const enrolled = flag?.experiment?.inExperiment === true && Boolean(flag.variant);
-    return { config, enrolled, variant: enrolled ? flag!.variant! : null, reason: "flagsmith" };
+    const parsed = parsePageWeight(flag?.value);
+    // Enrolled only if Flagsmith says so AND we recognised the value. If the value is
+    // empty or mistyped we show FULL, and then we must NOT record an exposure for a
+    // variant (e.g. "lite") the visitor never actually saw.
+    const enrolled = flag?.experiment?.inExperiment === true && Boolean(flag.variant) && parsed !== null;
+    return { config: parsed ?? FULL, enrolled, variant: enrolled ? flag!.variant! : null, reason: "flagsmith" };
   } catch {
     return fallback("error");
   }
