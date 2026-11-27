@@ -30,7 +30,8 @@ For visitors on slow (≤3G) or Data-Saver connections, a lite page will get mor
    | Intro video | 1080p, autoplay (~6 MB) | 8 KB poster; 360p (~0.24 MB) only on tap |
    | Images | retina PNGs (~300 KB) | small lazy JPEGs (~29 KB) |
    | Font | web font (Inter, ~47 KB) | system font, 0 KB |
-   | Total, fully loaded | ~6.5 MB | ~0.19 MB |
+   | Total, without tapping play | ~6.5 MB (video autoplays) | ~0.19 MB |
+   | Total, after tapping play | ~6.5 MB | ~0.43 MB (adds the 0.24 MB video) |
 
 5. **Show the cost.** A footer "data-cost receipt" shows how many MB this page used and what that costs at MTN Ghana's pay-as-you-go rate.
 6. **Fail safe.** No key, blocked cookies, Flagsmith down, or no answer within 5 s: everyone gets the full page and nothing is recorded.
@@ -55,7 +56,7 @@ A 10-minute guide. You need a Flagsmith account and a page with something heavy 
 **1. Create the Flagsmith side (about 5 minutes).** [`docs/flagsmith-setup.json`](docs/flagsmith-setup.json) lists everything to create by hand, with the exact names the code expects:
 - a warehouse in each environment (Environment Settings → Warehouse → Flagsmith)
 - the multivariate flag `page_weight`: control = the full JSON, one variation `lite`
-- the metrics `lesson_started`, `lesson_completed` and `page_bytes` (rename `lesson_started` to your own primary action if you like)
+- the metrics `lesson_started`, `lesson_completed` and `page_bytes` (if you rename `lesson_started` to your own primary action, use that same event name in your code's `track(...)` calls; Flagsmith matches events by exact name)
 - the segment `slow_or_saver`, for rolling out the winner later
 - the experiment: rollout 100%, split 50/50, created last, because it starts as soon as you create it
 
@@ -85,7 +86,9 @@ The rules that keep the experiment honest are built in, so keep them if you adap
 4. `npm run dev`, then open http://localhost:3000.
 
 **Simulated visitors** ([`scripts/simulate.ts`](scripts/simulate.ts)): `npx playwright install chromium` once, then `npm run simulate`.
-- It only targets this project's preview deployments, never production.
+- By default it targets this project's hosted `sim` preview, not your local server. To use your own, set `SIM_URL` (a `liteswitch-git-…` preview, or `http://localhost:3000` with `NEXT_PUBLIC_SIM_MODE=1` in `.env.local`) in `.env.local`. Production is always refused.
+- Vercel preview deployments are protected, so set `VERCEL_AUTOMATION_BYPASS_SECRET` in `.env.local` (Vercel → Settings → Deployment Protection → Protection Bypass for Automation). Without it every visit is blocked and the run stops.
+- The Flagsmith experiment must be running in the environment that deployment uses (Development for previews), or nobody is enrolled and the run stops after 10 visits.
 - Each simulated visitor gets a fresh identity, Chrome DevTools throttling (400 kbit/s down, 400 ms round trip) and a random 3–15 s patience, counted from page load. It clicks "Start lesson" only if the content appears in time.
 - Every visit is saved to `sim-results/`.
 
