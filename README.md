@@ -22,6 +22,35 @@ In much of Africa and South Asia, 1 GB of mobile data costs a real share of mont
 - Metrics: `lesson_started` (primary), `lesson_completed`, `page_bytes`.
 - If Flagsmith is unreachable, everyone gets the full page.
 
+## Use LiteSwitch on your site
+
+A 10-minute guide. You need a Flagsmith account and a page with something heavy on it: a video, big images, embeds.
+
+**1. Create the Flagsmith side (about 5 minutes).** [`docs/flagsmith-setup.json`](docs/flagsmith-setup.json) lists everything to create by hand, with the exact names the code expects:
+- a warehouse in each environment (Environment Settings → Warehouse → Flagsmith)
+- the multivariate flag `page_weight`: control = the full JSON, one variation `lite`
+- the metrics `lesson_started`, `lesson_completed` and `page_bytes` (rename `lesson_started` to your own primary action if you like)
+- the segment `slow_or_saver`, for rolling out the winner later
+- the experiment: rollout 100%, split 50/50, created last, because it starts as soon as you create it
+
+**2. Add the code (about 5 minutes).** Pick the path that matches your site:
+- **Any website, no build step:** copy [`examples/plain-html/liteswitch.js`](examples/plain-html/liteswitch.js) next to your page and follow [`examples/plain-html/index.html`](examples/plain-html/index.html):
+  ```js
+  import { decide } from "./liteswitch.js";
+  const choice = await decide({ environmentID: "<client-side key>" });
+  // render choice.config (full or lite), then:
+  choice.recordExposure();          // once, when the variant is on the page
+  choice.track("lesson_started");   // your conversion event
+  ```
+- **Next.js:** copy `lib/liteswitch/`, `lib/flags.ts` and `proxy.ts`, then wrap your page in a provider like `app/lesson/VariantProvider.tsx`. `proxy.ts` gives every visitor a stable id cookie and passes the `Save-Data` header to the browser.
+
+**3. Check it.** Put the Flagsmith client-side key in, and throttle Chrome to "3G" in DevTools (or force `navigator.connection` with `chrome://flags` → *Force effective connection type*). A slow visitor should get a decision from Flagsmith; a fast visitor always gets the full page and never contacts Flagsmith.
+
+The rules that keep the experiment honest are built in, so keep them if you adapt the code:
+- **Only slow visitors are enrolled.** Fast visitors would dilute the result. Safari and Firefox can't report a connection type, so they stay out.
+- **The exposure is recorded when the variant is put on the page, and only if Flagsmith says the visitor is in the experiment.** Never use `getExperimentFlag`, which records at read time.
+- **Every failure falls back to the full page with nothing recorded:** a missing key, blocked cookies, a 5-second timeout, or an error.
+
 ## Setup
 
 1. `npm install`
