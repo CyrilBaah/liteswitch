@@ -231,17 +231,19 @@ async function main(): Promise<void> {
     // short by chance), or until MAX_VISITS as a safety cap.
     const worker = async (): Promise<void> => {
       while (!done() && visits < MAX_VISITS) {
-        visits++;
+        // Take this visit's number now: other workers bump the shared counter while we wait.
+        const visitNo = ++visits;
         let r: VisitResult;
         try {
           r = await visit(browser, url);
           consecutiveFailures = 0;
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
+          // Record the failure FIRST, so even a run that stops right here accounts for it.
+          failures.push({ visit: visitNo, failed: true, error: message });
+          console.error(`visit ${visitNo} failed: ${message}`);
           // Protection blocking us won't fix itself: stop now instead of burning visits.
           if (message.includes("Vercel protection")) throw error;
-          console.error(`visit ${visits} failed: ${message}`);
-          failures.push({ visit: visits, failed: true, error: message });
           if (++consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
             throw new Error(`${MAX_CONSECUTIVE_FAILURES} visits in a row failed: stopping. Is the sim preview up?`);
           }
@@ -260,7 +262,7 @@ async function main(): Promise<void> {
         arm.enrolled++;
         if (r.started) arm.started++;
         if (r.completed) arm.completed++;
-        console.log(`visit ${visits}: ${r.variant}, started=${r.started}, completed=${r.completed}, ttc=${r.timeToContentMs ?? "-"}ms, bytes=${r.bytes ?? "-"}`);
+        console.log(`visit ${visitNo}: ${r.variant}, started=${r.started}, completed=${r.completed}, ttc=${r.timeToContentMs ?? "-"}ms, bytes=${r.bytes ?? "-"}`);
       }
     };
     await Promise.all(Array.from({ length: CONCURRENCY }, worker));
