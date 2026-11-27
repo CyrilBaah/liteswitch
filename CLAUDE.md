@@ -35,6 +35,7 @@ One useful free lesson page, **"Git in 10 minutes"**, with a video, images, code
 - **Server helper:** reads the `Save-Data` request header.
 
 ## Flagsmith design
+- **Environments:** **Production** = real visitors. **Development** = our Simulation environment (scripted visitors, local testing); "Simulation" in docs means this one.
 - **Identity:** the visitor id.
 - **Traits:** `net_type`, `save_data`, `rtt_ms`.
 - **Segment `slow_or_saver`:** `net_type` in `[slow-2g, 2g, 3g]` OR `save_data = true`.

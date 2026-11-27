@@ -80,7 +80,7 @@ Wireframe: docs/sketch.png
 - Call `flushEvents()` on `pagehide` so 3G visitors who leave quickly still report.
 
 ### Flagsmith setup (in the UI, before any code is deployed)
-- Project `liteswitch` with environments **Production** and **Simulation**. Turn on the Flagsmith-managed warehouse in **both**.
+- Project `liteswitch` with environments **Production** and **Simulation** (in Flagsmith this is the auto-created **Development** environment, kept under that name). Turn on the Flagsmith-managed warehouse in **both**.
 - Multivariate flag `page_weight`. Control value = full JSON `{"video":"autoplay-hd","images":"hd","fonts":"web","embeds":true}`. One variation with key `lite` = `{"video":"tap-to-load-360p","images":"low-lazy","fonts":"system","embeds":false}`. Split 50/50, rollout 100% (the code already limits it to slow visitors).
 - Metrics: `lesson_started` (primary), `lesson_completed`, `page_bytes` (value).
 - Segment `slow_or_saver` (net_type in slow-2g,2g,3g OR save_data = true). It's used **after** the experiment, to roll the winner out to slow visitors only.
@@ -309,7 +309,8 @@ Verification is deterministic: a fix counts when its `applied_text` is in the cu
 
 ## Implementation notes (2026-11-26, first build)
 - **`proxy.ts`, not `middleware.ts`.** Next.js 16 renamed Middleware to Proxy (same job). See `node_modules/next/dist/docs/01-app/01-getting-started/16-proxy.md`.
-- **Env vars:** `NEXT_PUBLIC_FLAGSMITH_ENVIRONMENT_KEY` (Production key on main, Simulation key on sim) and `NEXT_PUBLIC_SIM_MODE=1` (sim deployment only; it enables `?net=`).
+- **Flagsmith environments:** "Simulation" in this doc means the Flagsmith environment named **Development**. Production stays Production.
+- **Env vars:** `NEXT_PUBLIC_FLAGSMITH_ENVIRONMENT_KEY` (Production key on main, Development key on sim) and `NEXT_PUBLIC_SIM_MODE=1` (sim deployment only; it enables `?net=`).
 - **SDK calls** were checked against the `@flagsmith/flagsmith@12.6.0` type definitions: `init({ environmentID, enableEvents: true, identity, traits })`, `getAllFlags()`, `trackExposureEvent`, `trackEvent`, `flushEvents`. The SDK sends events with plain `fetch` (no sendBeacon/keepalive), so we flush right after every event.
 - **Video bytes:** browsers don't report a streaming video until it has fully downloaded, so the receipt estimates video bytes as file size × buffered fraction (`<video data-bytes>`; sizes in `app/lesson/media-sizes.json`, written by `scripts/make-media.sh`).
 - **Start gate** applies to enrolled visitors only. Visitors who aren't enrolled can start right away, so iOS Low Power Mode (which never preloads video) can't lock anyone out.
