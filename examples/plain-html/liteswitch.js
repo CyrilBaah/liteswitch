@@ -94,15 +94,19 @@ export async function decide({ environmentID, flag = "page_weight", timeoutMs = 
     // Normal read: records nothing. (getExperimentFlag would record the exposure
     // right now, before we know the visitor will actually see the variant.)
     const state = flagsmith.getAllFlags()[flag];
-    let config = FULL;
+    // Only accept the two known shapes: a typo in the dashboard should give a working full page.
+    let config = null;
     try {
       const parsed = typeof state?.value === "string" ? JSON.parse(state.value) : state?.value;
-      // Only accept the two known shapes: a typo in the dashboard should give a working full page.
       if (parsed?.video === LITE.video) config = LITE;
+      else if (parsed?.video === FULL.video) config = FULL;
     } catch {
-      // not JSON -> full
+      // not JSON -> not recognised
     }
-    const enrolled = state?.experiment?.inExperiment === true && Boolean(state.variant);
+    // Enrolled only if Flagsmith says so AND we recognised the value. Otherwise we show
+    // FULL, and must not record an exposure for a variant the visitor never saw.
+    const enrolled = state?.experiment?.inExperiment === true && Boolean(state.variant) && config !== null;
+    config = config ?? FULL;
     if (!enrolled) return { ...notEnrolled("flagsmith"), config };
 
     let exposed = false;
