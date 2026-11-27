@@ -42,7 +42,8 @@
 
       // 3. Render the chosen variant.
       if (choice.config.video === "autoplay-hd") {
-        media.innerHTML = `<video src="${FULL_VIDEO}" autoplay muted loop playsinline></video>`;
+        // controls: moving content must be pausable (keyboard users included).
+        media.innerHTML = `<video src="${FULL_VIDEO}" autoplay muted loop playsinline controls></video>`;
       } else {
         // Lite: a tiny poster; the small video downloads only if the visitor asks for it.
         media.innerHTML = `<button aria-label="Play video (360p, 0.24 MB)"><img src="${LITE_POSTER}" alt="Video preview: tap to play"></button>`;

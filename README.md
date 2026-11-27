@@ -42,7 +42,7 @@ A 10-minute guide. You need a Flagsmith account and a page with something heavy 
   choice.recordExposure();          // once, when the variant is on the page
   choice.track("lesson_started");   // your conversion event
   ```
-- **Next.js:** copy `lib/liteswitch/`, `lib/flags.ts` and `proxy.ts`, then wrap your page in a provider like `app/lesson/VariantProvider.tsx`. `proxy.ts` gives every visitor a stable id cookie and passes the `Save-Data` header to the browser.
+- **Next.js:** run `npm install @flagsmith/flagsmith@12.6.0`, then copy `lib/liteswitch/`, `lib/flags.ts` and `proxy.ts`, then wrap your page in a provider like `app/lesson/VariantProvider.tsx`. `proxy.ts` gives every visitor a stable id cookie and passes the `Save-Data` header to the browser.
 
 **3. Check it.** Put the Flagsmith client-side key in, and throttle Chrome to "3G" in DevTools (or force `navigator.connection` with `chrome://flags` → *Force effective connection type*). A slow visitor should get a decision from Flagsmith; a fast visitor always gets the full page and never contacts Flagsmith.
 
