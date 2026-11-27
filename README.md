@@ -8,7 +8,7 @@ An open-source "data-saver mode" for websites: visitors on slow or Data-Saver co
 
 ## Demo video
 
-> **TODO:** 3-minute demo video link goes here.
+**Demo video:** [Watch the 3-minute demo (link coming soon)](#demo-video) <!-- TODO: replace #demo-video with the video URL -->
 
 ## Problem
 
