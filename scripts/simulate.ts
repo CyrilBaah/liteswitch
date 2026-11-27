@@ -68,6 +68,9 @@ type VisitResult = {
   bytes: number | null;
 };
 
+/** A visit that crashed (timeout, failed click...). Saved too, so the JSON accounts for every attempt. */
+type FailedVisit = { visit: number; failed: true; error: string };
+
 /**
  * Allowlist, not blocklist: simulated traffic may only reach this project's Vercel
  * PREVIEW deployments (they use the Development key) or a local dev server.
@@ -218,6 +221,7 @@ async function main(): Promise<void> {
   let notEnrolled = 0;
   let consecutiveFailures = 0;
   const results: VisitResult[] = [];
+  const failures: FailedVisit[] = [];
   const done = () => tally.full.enrolled >= TARGET_PER_VARIANT && tally.lite.enrolled >= TARGET_PER_VARIANT;
 
   const browser = await chromium.launch();
@@ -227,16 +231,19 @@ async function main(): Promise<void> {
     // short by chance), or until MAX_VISITS as a safety cap.
     const worker = async (): Promise<void> => {
       while (!done() && visits < MAX_VISITS) {
-        visits++;
+        // Take this visit's number now: other workers bump the shared counter while we wait.
+        const visitNo = ++visits;
         let r: VisitResult;
         try {
           r = await visit(browser, url);
           consecutiveFailures = 0;
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
+          // Record the failure FIRST, so even a run that stops right here accounts for it.
+          failures.push({ visit: visitNo, failed: true, error: message });
+          console.error(`visit ${visitNo} failed: ${message}`);
           // Protection blocking us won't fix itself: stop now instead of burning visits.
           if (message.includes("Vercel protection")) throw error;
-          console.error(`visit ${visits} failed: ${message}`);
           if (++consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
             throw new Error(`${MAX_CONSECUTIVE_FAILURES} visits in a row failed: stopping. Is the sim preview up?`);
           }
@@ -255,7 +262,7 @@ async function main(): Promise<void> {
         arm.enrolled++;
         if (r.started) arm.started++;
         if (r.completed) arm.completed++;
-        console.log(`visit ${visits}: ${r.variant}, started=${r.started}, completed=${r.completed}, ttc=${r.timeToContentMs ?? "-"}ms, bytes=${r.bytes ?? "-"}`);
+        console.log(`visit ${visitNo}: ${r.variant}, started=${r.started}, completed=${r.completed}, ttc=${r.timeToContentMs ?? "-"}ms, bytes=${r.bytes ?? "-"}`);
       }
     };
     await Promise.all(Array.from({ length: CONCURRENCY }, worker));
@@ -272,7 +279,9 @@ async function main(): Promise<void> {
     // Keep every visit on disk for the write-up (no secrets in here).
     mkdirSync("sim-results", { recursive: true });
     const file = `sim-results/sim-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
-    writeFileSync(file, JSON.stringify({ url: url.toString(), network: NETWORK_3G, results }, null, 2));
+    // attempted = completed visits + failed visits, so every attempt is accounted for.
+    const summary = { attempted: visits, completed: results.length, failed: failures.length, notEnrolled };
+    writeFileSync(file, JSON.stringify({ url: url.toString(), network: NETWORK_3G, summary, results, failures }, null, 2));
     console.log(`  per-visit data: ${file}`);
   }
 }
