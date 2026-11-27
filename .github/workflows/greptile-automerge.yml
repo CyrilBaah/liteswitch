@@ -157,14 +157,16 @@ jobs:
             exit 0
           fi
 
-          # A PR that changes workflows changes what this robot is allowed to do,
-          # so a human always merges it, whatever the score. The file list is fetched
+          # A PR that touches .github/ (workflows, actions, CODEOWNERS...) changes what
+          # this robot and CI are allowed to do, so a human always merges it, whatever
+          # the score. Both the new AND the old path of every file are checked, so
+          # renaming a workflow out of .github/ can't hide it. The list is fetched
           # into a variable first: if the API call fails, set -e stops the run here
-          # instead of treating the failure as "no workflow files changed".
-          FILES=$(gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[].filename')
-          if grep -q '^\.github/workflows/' <<<"$FILES"; then
+          # instead of treating the failure as "nothing in .github/ changed".
+          FILES=$(gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[] | .filename, (.previous_filename // empty)')
+          if grep -q '^\.github/' <<<"$FILES"; then
             disable_auto
-            comment_once "workflows-$SCORE" "Greptile confidence $SCORE/5, but this PR changes GitHub workflows, so it waits for a human merge."
+            comment_once "workflows-$SCORE" "Greptile confidence $SCORE/5, but this PR changes files under .github/ (workflows, CI settings), so it waits for a human merge."
             exit 0
           fi
 
