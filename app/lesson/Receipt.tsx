@@ -2,7 +2,7 @@
 // Footer "data-cost receipt": how many MB this page used and what that costs.
 // Also sends the page_bytes event once (when the visitor leaves or completes).
 import { useEffect, useState } from "react";
-import { CFA_PER_GB, bytesToCfa, bytesTransferred } from "@/lib/liteswitch/bytes";
+import { CEDIS_PER_MB, bytesToCedis, bytesTransferred } from "@/lib/liteswitch/bytes";
 import { track, type Decision } from "@/lib/flags";
 import { useVariant } from "./VariantProvider";
 
@@ -42,16 +42,16 @@ export function Receipt() {
   }, [decision]);
 
   const mb = bytes / 1_000_000;
-  const cfa = bytesToCfa(bytes);
+  const cedis = bytesToCedis(bytes);
   const mode = decision ? (decision.config.video === "autoplay-hd" ? "full" : "lite") : "…";
 
   return (
     <footer className="receipt">
       <p>
-        🧾 This page used <strong>{mb.toFixed(2)} MB</strong> ≈ <strong>{cfa.toFixed(2)} FCFA</strong> of mobile data
+        🧾 This page used <strong>{mb.toFixed(2)} MB</strong> ≈ <strong>GH₵{cedis.toFixed(2)}</strong> of mobile data
       </p>
       <p className="small">
-        Price: {CFA_PER_GB.toLocaleString("en")} FCFA per GB (Orange Sénégal 1 GB pass). Video bytes are estimated from how much has buffered.
+        Priced at MTN Ghana&apos;s pay-as-you-go rate (GH₵{CEDIS_PER_MB}/MB, no bundle). Video bytes are estimated from how much has buffered.
       </p>
       {mode === "lite" && (
         <p className="small">Lite mode is on because your connection looks slow, so videos load only when you tap.</p>

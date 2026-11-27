@@ -10,7 +10,7 @@ Mode: Builder (hackathon: Toggle Wars, Track 01 "Test Something Real")
 Visitors on slow (<=3G) or Data-Saver connections pay real money per MB and often give up before a heavy page loads. Browsers already report the connection (`navigator.connection`, `Save-Data`), but most sites ignore it. LiteSwitch serves a lite page to those visitors, and a Flagsmith Experimentation A/B test checks the hypothesis: **for slow or Data-Saver visitors, the lite page makes more of them start the lesson than the full page does.**
 
 ## What Makes This Cool
-- The footer "data-cost receipt" turns an abstract metric into money: "This page used 6.4 MB ≈ X CFA" next to "0.3 MB ≈ X CFA". It's the 10-second demo moment.
+- The footer "data-cost receipt" turns an abstract metric into money: "This page used 6.4 MB ≈ GH₵X" next to "0.3 MB ≈ GH₵X". It's the 10-second demo moment.
 - The experiment targets the people who actually feel the cost. Fast visitors are never enrolled, so the result answers the real question instead of being averaged away by fiber users.
 
 ## Constraints
@@ -64,7 +64,7 @@ Wireframe: docs/sketch.png
 | `lib/flags.ts` | Flagsmith init with the env key baked into the deployment (see Simulation). Fast/unknown visitors are hardcoded to full and never touch the flag. **Slow visitors:** `identify(vid)` with traits, then read `page_weight` with the **normal** read `getAllFlags().page_weight` (records nothing). The exposure is recorded with `trackExposureEvent('page_weight', { value: flag.variant })` **at the moment the variant decision is committed to the DOM** (the `LessonMedia` variant mount, in a `useEffect`, *before* any media bytes load), not when media first paints. So a recorded exposure always matches what the visitor was shown, and a full-arm visitor who leaves during the HD download still counts as exposed with no `lesson_started`. That's exactly the drop-off premise 6 wants to capture. Timeout 5 s, or any error: render full, **record no exposure** (visitor not enrolled). **Exposure rule:** record the exposure only when `flag?.experiment?.inExperiment === true`. Otherwise (experiment not started yet, already ended, identity outside the rollout, or `experiment` missing), render the flag's value (full if empty) and record nothing. Pre-start test exposures come only from a throwaway test identity (clear cookies after testing). |
 | `app/page.tsx` | "Git in 10 minutes" server-rendered shell: title, text, code blocks, buttons, and a reserved-height media slot so nothing jumps. |
 | `app/LessonMedia.tsx` | Client component. **While a slow visitor's variant is unresolved, it shows only the reserved-height placeholder: no media requests, no web font.** Then it renders full (autoplay HD video + HD images + web font loaded on demand) or lite (8 KB poster with tap-to-load 360p + low-res lazy images, system font), and calls the exposure hook on render. Fast/unknown visitors render full immediately. |
-| `app/Receipt.tsx` | Sums `transferSize` from `performance.getEntriesByType('navigation' \| 'resource')` and shows MB × price-per-GB in CFA (updates live). Sends `page_bytes` once, at `pagehide` or on Mark complete, whichever comes first. See "Measuring bytes". |
+| `app/Receipt.tsx` | Sums `transferSize` from `performance.getEntriesByType('navigation' \| 'resource')` and shows MB × price-per-MB in Ghana cedis (updates live). Sends `page_bytes` once, at `pagehide` or on Mark complete, whichever comes first. See "Measuring bytes". |
 | `scripts/simulate.ts` | Playwright runner (Simulation env only). See below. |
 | `.env.example` | `NEXT_PUBLIC_FLAGSMITH_ENV_KEY` (Production key on the main deployment, Simulation key on the sim deployment), `NEXT_PUBLIC_SIM_MODE`, `VERCEL_BYPASS_TOKEN` (script only, never committed). Client env keys are public by design; no server secret is needed for A. |
 
@@ -97,7 +97,7 @@ Wireframe: docs/sketch.png
 1. JS SDK: the exact signature for sending traits with `identify` (`identify(id, traits)` vs `setTraits`), and the exact signature of `trackExposureEvent`. Both must come from the docs before the code is written.
 2. After the experiment ends, what does the normal read `getAllFlags().page_weight` return (does `experiment.inExperiment` go false?), and should the code stop calling `trackExposureEvent` then? Not documented. This decides whether rollout needs a code change (skip the exposure when `inExperiment` is false) or just a segment override.
 3. Does the experiment honor a segment override that already exists on the flag? Leave **no** overrides on `page_weight` until the experiment ends.
-4. Price per GB for the receipt: pick one sourced figure for a CFA-zone operator, and cite it in the footer.
+4. Price for the receipt: **decided**: MTN Ghana pay-as-you-go, GH₵0.1145/MB (MTN Ghana "Tariff review: VAT January 2026" FAQ), cited in the footer and in `lib/liteswitch/bytes.ts`.
 5. The "show full page" escape link in lite would let visitors switch variants mid-experiment. **Cut for v1.**
 
 ## Success Criteria
