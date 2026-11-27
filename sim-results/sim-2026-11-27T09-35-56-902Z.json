@@ -1,0 +1,63 @@
+{
+  "url": "https://liteswitch-git-sim-cyrilbaahs-projects.vercel.app/",
+  "network": {
+    "offline": false,
+    "latency": 400,
+    "downloadThroughput": 51200,
+    "uploadThroughput": 19200
+  },
+  "summary": {
+    "attempted": 5,
+    "completed": 5,
+    "failed": 0,
+    "notEnrolled": 0
+  },
+  "results": [
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": false,
+      "completed": false,
+      "patienceMs": 6010,
+      "timeToContentMs": null,
+      "bytes": 170000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": false,
+      "patienceMs": 11745,
+      "timeToContentMs": 7692,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 13486,
+      "timeToContentMs": null,
+      "bytes": 480000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 12123,
+      "timeToContentMs": null,
+      "bytes": 430000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 7288,
+      "timeToContentMs": 6180,
+      "bytes": 200000
+    }
+  ],
+  "failures": []
+}
