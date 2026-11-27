@@ -1,0 +1,140 @@
+# Auto-merge a PR when Greptile is fully confident in it (5/5).
+#
+# Rule: Greptile 5/5 on the CURRENT head commit -> turn on GitHub auto-merge.
+# GitHub then merges by itself, but only after every required check on main
+# (ci + Greptile Review) is green. Anything below 5/5 waits for Cyril.
+name: Greptile auto-merge
+
+on:
+  # Greptile writes its summary and score INTO THE PR DESCRIPTION (seen on PR #1),
+  # so a description edit by the Greptile bot is the main trigger.
+  # pull_request_target (not pull_request) runs the copy of this file on main,
+  # and gets a write token even for PRs from forks. That's safe here because this
+  # workflow never checks out or runs code from the PR.
+  # "synchronize" = new commits pushed: the old score no longer applies.
+  pull_request_target:
+    types: [edited, synchronize]
+  # Greptile also submits a review (APPROVED / COMMENTED) when it finishes.
+  pull_request_review:
+    types: [submitted, edited]
+  # If Greptile is ever configured to post its summary as a comment instead.
+  issue_comment:
+    types: [created, edited]
+
+# Least privilege: write access to PRs (comment, enable/disable auto-merge) and
+# to contents (needed to merge). Nothing else.
+permissions:
+  contents: write
+  pull-requests: write
+
+# Greptile can edit the description several times in a row. Handle the events
+# for one PR one at a time, so two runs never fight over the same PR.
+concurrency:
+  group: greptile-automerge-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  automerge:
+    # Only the Greptile bot can make this workflow merge anything: "[bot]" logins
+    # are reserved by GitHub, so nobody else can post as greptile-apps[bot].
+    # The one exception is a new push (synchronize), which can only turn
+    # auto-merge OFF, never on.
+    if: >-
+      (github.event.sender.login == 'greptile-apps[bot]' &&
+       (github.event_name != 'issue_comment' || github.event.issue.pull_request)) ||
+      (github.event_name == 'pull_request_target' && github.event.action == 'synchronize')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      PR: ${{ github.event.pull_request.number || github.event.issue.number }}
+      EVENT: ${{ github.event_name }}/${{ github.event.action }}
+    steps:
+      - name: Read Greptile's score and decide
+        run: |
+          set -euo pipefail
+          BOT="greptile-apps[bot]"
+
+          # Post a short PR comment once per (head commit, outcome). The hidden
+          # marker stops repeat comments when Greptile edits its summary again.
+          comment_once() {
+            local marker="<!-- greptile-automerge sha=$HEAD result=$1 -->"
+            if gh api --paginate --slurp "repos/$REPO/issues/$PR/comments" \
+                 | jq -e --arg m "$marker" 'add | any(.body | contains($m))' >/dev/null; then
+              echo "Already commented: $1"
+            else
+              gh pr comment "$PR" --repo "$REPO" --body "$2"$'\n\n'"$marker"
+            fi
+          }
+
+          # Turn auto-merge off if it is on (a score that no longer applies must not merge).
+          disable_auto() {
+            if [ "$AUTO" = "true" ]; then
+              gh pr merge "$PR" --repo "$REPO" --disable-auto && echo "Auto-merge disabled"
+            fi
+          }
+
+          pr=$(gh pr view "$PR" --repo "$REPO" --json state,isDraft,headRefOid,body,autoMergeRequest)
+          STATE=$(jq -r .state <<<"$pr")
+          HEAD=$(jq -r .headRefOid <<<"$pr")
+          AUTO=$(jq -r '.autoMergeRequest != null' <<<"$pr")
+          echo "Event $EVENT on PR #$PR, head $HEAD, state $STATE, auto-merge on: $AUTO"
+          if [ "$STATE" != "OPEN" ] || [ "$(jq -r .isDraft <<<"$pr")" = "true" ]; then
+            echo "Not an open, ready PR: nothing to do."; exit 0
+          fi
+
+          # New commits: any earlier 5/5 was for older code. Wait for Greptile to re-score.
+          if [ "$EVENT" = "pull_request_target/synchronize" ]; then
+            if [ "$AUTO" = "true" ]; then
+              disable_auto
+              comment_once "new-commits" "New commits pushed: auto-merge is off until Greptile re-scores this PR."
+            fi
+            exit 0
+          fi
+
+          # Find Greptile's summary: normally the PR description; otherwise its latest comment.
+          summary=$(jq -r '.body // ""' <<<"$pr")
+          if ! grep -qiE 'greptile_confidence_score|Confidence Score' <<<"$summary"; then
+            summary=$(gh api --paginate --slurp "repos/$REPO/issues/$PR/comments" \
+              | jq -r --arg bot "$BOT" 'add | map(select(.user.login == $bot)) | last | .body // ""')
+          fi
+
+          # Parse the score robustly. First the machine-readable marker Greptile
+          # embeds (<!-- greptile_confidence_score:5 -->), then the visible
+          # "Confidence Score: 5/5" heading as a fallback. Last match wins.
+          SCORE=$(grep -oE 'greptile_confidence_score:[[:space:]]*[0-9]+' <<<"$summary" | tail -n1 | grep -oE '[0-9]+$' || true)
+          if [ -z "$SCORE" ]; then
+            SCORE=$(grep -oiE 'Confidence Score:[[:space:]]*[0-9]+[[:space:]]*/[[:space:]]*5' <<<"$summary" \
+              | tail -n1 | sed -E 's/[^0-9]*([0-9]+).*/\1/' || true)
+          fi
+          if [ -z "$SCORE" ]; then
+            echo "No Greptile score yet (still reviewing?): nothing to do."; exit 0
+          fi
+
+          # A score only counts for the commit Greptile actually reviewed. Its summary
+          # links "Last reviewed commit: .../commit/<sha>"; it must be the current head.
+          REVIEWED=$(grep -oE 'commit/[0-9a-f]{40}' <<<"$summary" | tail -n1 | cut -d/ -f2 || true)
+          if [ "$REVIEWED" != "$HEAD" ]; then
+            echo "Score $SCORE/5 is for ${REVIEWED:-an unknown commit}, not head $HEAD: waiting for a fresh review."
+            exit 0
+          fi
+
+          # A PR that changes workflows changes what this robot is allowed to do,
+          # so a human always merges it, whatever the score.
+          if gh pr diff "$PR" --repo "$REPO" --name-only | grep -q '^\.github/workflows/'; then
+            disable_auto
+            comment_once "workflows-$SCORE" "Greptile confidence $SCORE/5, but this PR changes GitHub workflows, so it waits for a human merge."
+            exit 0
+          fi
+
+          if [ "$SCORE" = "5" ]; then
+            # --merge = a real merge commit, so every one-sentence commit and its
+            # author stay in main's history (squash merging is disabled on the repo).
+            # --auto = GitHub merges only once ci + Greptile Review are green and the
+            # branch is up to date. This step never skips the required checks.
+            gh pr merge "$PR" --repo "$REPO" --auto --merge
+            comment_once "auto-5" "Greptile confidence 5/5: auto-merge is on. GitHub will merge once ci and Greptile Review are green."
+          else
+            disable_auto
+            comment_once "score-$SCORE" "Greptile confidence $SCORE/5, waiting for a human merge."
+          fi
