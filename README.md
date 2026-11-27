@@ -8,7 +8,7 @@ An open-source "data-saver mode" for websites: visitors on slow or Data-Saver co
 
 ## Demo video
 
-> **TODO:** 2-minute demo video link goes here.
+**Demo video:** [Watch the 3-minute demo (link coming soon)](#demo-video) <!-- TODO: replace #demo-video with the video URL -->
 
 ## Problem
 
@@ -94,24 +94,59 @@ The rules that keep the experiment honest are built in, so keep them if you adap
 
 ## Results
 
-> **TODO:** final results once Flagsmith has processed every event. The numbers below are **interim**, copied from the Flagsmith dashboard; none are invented.
+Simulated and real visitors are reported **separately**. All figures below come from the Flagsmith dashboard or from the saved per-visit files in [`sim-results/`](sim-results/); none are invented.
 
-Real and simulated results are reported **separately**:
+### Simulated visitors (Flagsmith Development environment)
 
-- **Simulation (Flagsmith Development environment):** scripted visitors under Chrome throttling (400 kbit/s, 400 ms round trip, 3–15 s patience). Note: one enrolled identity in Development is the author's own test browser, and 5 more are a smoke test of the script.
+**How they were made:** 595 scripted visits by [`scripts/simulate.ts`](scripts/simulate.ts), in two runs on 27 Nov 2026, against the `sim` preview deployment.
+- Each visitor got a fresh identity and Chrome DevTools throttling of **400 kbit/s down with a 400 ms round trip**.
+- Each also got a random **patience of 3–15 s** (9 s on average), counted from page load. It clicked "Start lesson" only if the content appeared within that time; otherwise it left.
+- These are not people. The test shows how load time interacts with a plausible range of patience.
 
-  **Interim**, as of 27 Nov 2026 09:44 UTC, before the final ~500-visit simulation run was processed. Final numbers will replace these:
+**Flagsmith's analysis** (experiment "Lite page for slow connections (Simulation)", as of 27 Nov 2026 09:55 UTC):
 
-  | | Full (control) | Lite |
-  |---|---|---|
-  | Exposures | 110 | 101 |
-  | Started the lesson (`lesson_started`) | 6.4% | 83.2% |
+| | Full (control) | Lite |
+|---|---|---|
+| Exposures | 292 | 291 |
+| Started the lesson (`lesson_started`) | 7.2% | **79.0%** |
+| Lift vs control | baseline | **+999.0%** |
+| 95% credible interval | baseline | **[+540.7%, +1457.3%]** |
+| Win probability | < 1% | **> 99%** |
 
-  Flagsmith reports **211** enrolled users, a lift of **+1206.9%** for lite, and a **95% credible interval of [+258.8%, +2155.1%]**. The interval does **not** cross zero. Win probability is **lite 99%**, control 1%, and Flagsmith shows "99% Winner Probability Confirmed". The interval is wide because the full page's start rate is so low that small changes in its count swing the ratio.
+The credible interval is entirely above zero; it doesn't cross it. Flagsmith shows "> 99% Winner Probability Confirmed" (583 users enrolled). The interval is wide because full's start rate is so low that a few visitors more or less swing the ratio a lot.
 
-  TODO (final): visitors per variant, the final Flagsmith figures, bytes and GH₵ per visit, and time-to-content for full vs lite.
-- **Real visitors (Flagsmith Production environment):** no real slow-connection visitors enrolled yet (as of 27 Nov 2026 09:44 UTC, to be confirmed). TODO: the same figures once real visitors arrive.
-- **Screenshots:** TODO, in [`docs/results/`](docs/results/).
+**The script's own measurements** (both runs combined): run 1 is [`sim-results/sim-2026-11-27T09-38-11-734Z.json`](sim-results/sim-2026-11-27T09-38-11-734Z.json), run 2 is [`…09-52-34-279Z.json`](sim-results/sim-2026-11-27T09-52-34-279Z.json), and the smoke test is [`…09-35-56-902Z.json`](sim-results/sim-2026-11-27T09-35-56-902Z.json).
+
+| | Full (control) | Lite |
+|---|---|---|
+| Enrolled visitors | 294 | 290 |
+| Started the lesson | 21 (7.1%) | **226 (77.9%)** |
+| Completed the lesson (scripted, see below) | 15 (5.1%) | 132 (45.5%) |
+| Content on screen before the visitor gave up | 21 of 294 | 226 of 290 |
+| Average time until content was visible (when it was) | 13.3 s | **6.2 s** |
+| Page weight, fully loaded | 6.50 MB ≈ GH₵0.744 | **0.19 MB ≈ GH₵0.022** |
+
+- **Completions are scripted, not measured.** The script clicks "Mark complete" for a random 60% of visitors who started, after 1–4 s. So completions follow starts by design (60% of 77.9% ≈ 46.7%; we got 45.5%), and they say nothing new about lite vs full. They only show that the `lesson_completed` event works. The real findings are lesson starts and time-to-content.
+- **Data and money saved:** about **6.3 MB and GH₵0.72 per visit**, fully loaded, at MTN Ghana's pay-as-you-go rate (GH₵0.1145/MB, no bundle). If a lite visitor taps play, the 360p video adds 0.24 MB (≈ GH₵0.027).
+- **Bytes before leaving** were 0.29 MB (full) vs 0.20 MB (lite) on average. That's low for full only because most full visitors gave up before the page finished loading, so it says little about page weight. The fully loaded numbers are the fair comparison.
+
+**Who is counted, and the small gaps:**
+- 11 scripted visitors were **not enrolled**: Flagsmith didn't place them in the experiment, most likely because its answer didn't arrive within the 5 s limit. They got the full page and appear in neither table.
+- A first run was **cut short** after 95 enrolled visits, when the Vercel bypass secret was rotated mid-run. Its 16 failed visits are recorded in its results file; the second run had 0 failures.
+- Development also contains a **5-visit smoke test** of the script and **one test browser** used by the author (Cyril, with Claude) to check the setup. Both are in Flagsmith's numbers but not in the script's table.
+- **The two tables differ slightly in their counts.** Flagsmith counts 583 users, while the script saw 584 enrolled visits, plus the 6 extra identities above. A few exposure events likely didn't arrive: the SDK sends events with a normal request, which can be cut off when a page closes. The statistics come from Flagsmith's count.
+
+![Flagsmith experiment summary: lite > 99% winner probability, +999.0% lift, 583 users enrolled](docs/results/flagsmith-simulation-summary.jpg)
+
+![Flagsmith analysis: control 292 exposures at 7.2%, lite 291 at 79.0%, credible interval 540.7% to 1457.3%](docs/results/flagsmith-simulation-analysis.jpg)
+
+### Real visitors (Flagsmith Production environment)
+
+The Production experiment is running at https://liteswitch.vercel.app, but it has **0 exposures** so far: no real slow-connection visitors have been enrolled yet. Fast visitors and Safari/Firefox visitors get the full page and are, by design, never enrolled. So there is **no real-world result yet**, and the simulated result above should not be read as one.
+
+### What we'd do next
+
+When Production has enough real slow-connection visitors, compare its result with the simulation. If lite still wins, roll it out with a segment override on `slow_or_saver`: slow visitors get lite, everyone else keeps the full page.
 
 ## Limitations
 
@@ -120,7 +155,7 @@ Real and simulated results are reported **separately**:
 - **Simulated visitors aren't people.** Their patience (3–15 s) is our assumption. They show how load time interacts with patience, not how humans behave, which is why their results are reported apart from real visitors.
 - **Bytes are partly estimated.** Browsers don't report a video that's still streaming, so the receipt estimates video bytes from how much has buffered. A visitor who leaves early also pays for less than the full page weight.
 - **The price is a worst case.** GH₵0.1145/MB is MTN Ghana's no-bundle rate; bundles cost less. The receipt counts 1 MB as 1,000,000 bytes, so if MTN bills 1,048,576 bytes per MB the real charge is about 5% lower.
-- **Small real sample.** The Production experiment ran for the length of a hackathon weekend.
+- **No real sample yet.** The Production experiment has had 0 slow-connection visitors so far, so the only result is the simulated one.
 - **Flagsmith Experimentation is in beta.**
 
 ## How AI tools were used

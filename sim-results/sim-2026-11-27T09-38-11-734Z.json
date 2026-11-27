@@ -1,0 +1,954 @@
+{
+  "url": "https://liteswitch-git-sim-cyrilbaahs-projects.vercel.app/",
+  "network": {
+    "offline": false,
+    "latency": 400,
+    "downloadThroughput": 51200,
+    "uploadThroughput": 19200
+  },
+  "summary": {
+    "attempted": 112,
+    "completed": 95,
+    "failed": 16,
+    "notEnrolled": 0
+  },
+  "results": [
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": false,
+      "completed": false,
+      "patienceMs": 5368,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 5854,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 5936,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 6191,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 6827,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 7503,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": false,
+      "patienceMs": 11416,
+      "timeToContentMs": 7490,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 12162,
+      "timeToContentMs": 7479,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": false,
+      "completed": false,
+      "patienceMs": 5312,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 6676,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 7000,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": false,
+      "completed": false,
+      "patienceMs": 4703,
+      "timeToContentMs": null,
+      "bytes": 180000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 6776,
+      "timeToContentMs": null,
+      "bytes": 210000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 8198,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 4120,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 10755,
+      "timeToContentMs": null,
+      "bytes": 410000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 12657,
+      "timeToContentMs": null,
+      "bytes": 420000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 4479,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 8003,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 6271,
+      "timeToContentMs": 6201,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 4971,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 9171,
+      "timeToContentMs": null,
+      "bytes": 250000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 11561,
+      "timeToContentMs": 6146,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": false,
+      "patienceMs": 7445,
+      "timeToContentMs": 6466,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": false,
+      "patienceMs": 14925,
+      "timeToContentMs": 6181,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 8545,
+      "timeToContentMs": 6148,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": false,
+      "patienceMs": 7466,
+      "timeToContentMs": 6076,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 4674,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 3270,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 9391,
+      "timeToContentMs": null,
+      "bytes": 280000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 12129,
+      "timeToContentMs": null,
+      "bytes": 450000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 11296,
+      "timeToContentMs": null,
+      "bytes": 430000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 12683,
+      "timeToContentMs": null,
+      "bytes": 450000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": false,
+      "completed": false,
+      "patienceMs": 5535,
+      "timeToContentMs": null,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 4743,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 4005,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": true,
+      "completed": true,
+      "patienceMs": 14697,
+      "timeToContentMs": 14125,
+      "bytes": 810000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 8309,
+      "timeToContentMs": null,
+      "bytes": 240000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 7238,
+      "timeToContentMs": 6161,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 14926,
+      "timeToContentMs": 6410,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": false,
+      "completed": false,
+      "patienceMs": 5365,
+      "timeToContentMs": null,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 6756,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 8875,
+      "timeToContentMs": null,
+      "bytes": 180000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 10336,
+      "timeToContentMs": 6822,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 10759,
+      "timeToContentMs": null,
+      "bytes": 300000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 6509,
+      "timeToContentMs": 6154,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 4940,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 7628,
+      "timeToContentMs": 6145,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": false,
+      "patienceMs": 6709,
+      "timeToContentMs": 6600,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 13001,
+      "timeToContentMs": 6662,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 9896,
+      "timeToContentMs": 6111,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 10703,
+      "timeToContentMs": null,
+      "bytes": 340000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 8120,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": false,
+      "patienceMs": 14541,
+      "timeToContentMs": 6084,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 8460,
+      "timeToContentMs": 6054,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 13247,
+      "timeToContentMs": 6075,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 12456,
+      "timeToContentMs": null,
+      "bytes": 450000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": true,
+      "completed": false,
+      "patienceMs": 14732,
+      "timeToContentMs": 13659,
+      "bytes": 490000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 8786,
+      "timeToContentMs": null,
+      "bytes": 280000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 3618,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 6542,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 6655,
+      "timeToContentMs": null,
+      "bytes": 210000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": false,
+      "completed": false,
+      "patienceMs": 3924,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 11126,
+      "timeToContentMs": null,
+      "bytes": 410000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": false,
+      "completed": false,
+      "patienceMs": 3609,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 14270,
+      "timeToContentMs": 6094,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 12101,
+      "timeToContentMs": 6093,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": true,
+      "completed": true,
+      "patienceMs": 12136,
+      "timeToContentMs": 11634,
+      "bytes": 550000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 5889,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 10657,
+      "timeToContentMs": null,
+      "bytes": 300000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 9062,
+      "timeToContentMs": null,
+      "bytes": 230000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": false,
+      "completed": false,
+      "patienceMs": 3819,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": false,
+      "completed": false,
+      "patienceMs": 4693,
+      "timeToContentMs": null,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 13909,
+      "timeToContentMs": 6090,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 5560,
+      "timeToContentMs": null,
+      "bytes": 240000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 13795,
+      "timeToContentMs": null,
+      "bytes": 450000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 4862,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": false,
+      "completed": false,
+      "patienceMs": 3743,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 6729,
+      "timeToContentMs": null,
+      "bytes": 180000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 11911,
+      "timeToContentMs": null,
+      "bytes": 350000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 6134,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 13380,
+      "timeToContentMs": 6123,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 8294,
+      "timeToContentMs": null,
+      "bytes": 180000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 6163,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 8029,
+      "timeToContentMs": null,
+      "bytes": 180000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": false,
+      "patienceMs": 8969,
+      "timeToContentMs": 6063,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 7289,
+      "timeToContentMs": 6063,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 4400,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": false,
+      "completed": false,
+      "patienceMs": 3452,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 11427,
+      "timeToContentMs": 6096,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": false,
+      "completed": false,
+      "patienceMs": 3215,
+      "timeToContentMs": null,
+      "bytes": 160000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 11831,
+      "timeToContentMs": 6123,
+      "bytes": 200000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": true,
+      "completed": true,
+      "patienceMs": 14526,
+      "timeToContentMs": 14085,
+      "bytes": 860000
+    },
+    {
+      "enrolled": true,
+      "variant": "full",
+      "started": false,
+      "completed": false,
+      "patienceMs": 9477,
+      "timeToContentMs": null,
+      "bytes": 290000
+    },
+    {
+      "enrolled": true,
+      "variant": "lite",
+      "started": true,
+      "completed": true,
+      "patienceMs": 13088,
+      "timeToContentMs": 6077,
+      "bytes": 200000
+    }
+  ],
+  "failures": [
+    {
+      "visit": 103,
+      "failed": true,
+      "error": "browserContext.close: Target page, context or browser has been closed"
+    },
+    {
+      "visit": 104,
+      "failed": true,
+      "error": "page.waitForTimeout: Target page, context or browser has been closed"
+    },
+    {
+      "visit": 105,
+      "failed": true,
+      "error": "browserContext.close: Target page, context or browser has been closed"
+    },
+    {
+      "visit": 106,
+      "failed": true,
+      "error": "browserContext.close: Target page, context or browser has been closed"
+    },
+    {
+      "visit": 107,
+      "failed": true,
+      "error": "browser.newContext: Target page, context or browser has been closed"
+    },
+    {
+      "visit": 108,
+      "failed": true,
+      "error": "browser.newContext: Target page, context or browser has been closed"
+    },
+    {
+      "visit": 109,
+      "failed": true,
+      "error": "browserContext.close: Target page, context or browser has been closed"
+    },
+    {
+      "visit": 110,
+      "failed": true,
+      "error": "browserContext.close: Target page, context or browser has been closed"
+    },
+    {
+      "visit": 111,
+      "failed": true,
+      "error": "browserContext.close: Target page, context or browser has been closed"
+    },
+    {
+      "visit": 112,
+      "failed": true,
+      "error": "browser.newContext: Target page, context or browser has been closed"
+    },
+    {
+      "visit": 112,
+      "failed": true,
+      "error": "browser.newContext: Target page, context or browser has been closed"
+    },
+    {
+      "visit": 112,
+      "failed": true,
+      "error": "browser.newContext: Target page, context or browser has been closed"
+    },
+    {
+      "visit": 112,
+      "failed": true,
+      "error": "browser.newContext: Target page, context or browser has been closed"
+    },
+    {
+      "visit": 112,
+      "failed": true,
+      "error": "browser.newContext: Target page, context or browser has been closed"
+    },
+    {
+      "visit": 112,
+      "failed": true,
+      "error": "browser.newContext: Target page, context or browser has been closed"
+    },
+    {
+      "visit": 112,
+      "failed": true,
+      "error": "browser.newContext: Target page, context or browser has been closed"
+    }
+  ]
+}
