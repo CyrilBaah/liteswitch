@@ -1,0 +1,193 @@
+# Auto-merge a PR when Greptile is fully confident in it (5/5).
+#
+# Rule: Greptile 5/5 on the CURRENT head commit -> turn on GitHub auto-merge.
+# GitHub then merges by itself, but only after every required check on main
+# (ci + Greptile Review) is green. Anything below 5/5 waits for Cyril.
+#
+# Fail closed: any error (API failure, unexpected format) stops the run with
+# auto-merge untouched or off. It never falls through to merging.
+name: Greptile auto-merge
+
+on:
+  # Greptile writes its summary and score INTO THE PR DESCRIPTION (seen on PR #1),
+  # so a description edit by the Greptile bot is the main trigger.
+  # pull_request_target (not pull_request) runs the copy of this file on main,
+  # and gets a write token even for PRs from forks. That's safe here because this
+  # workflow never checks out or runs code from the PR.
+  # "synchronize" = new commits pushed: the old score no longer applies.
+  pull_request_target:
+    types: [edited, synchronize]
+  # Greptile also submits a review (APPROVED / COMMENTED) when it finishes.
+  pull_request_review:
+    types: [submitted, edited]
+
+# Least privilege: write access to PRs (comment, enable/disable auto-merge) and
+# to contents (needed to merge). Nothing else.
+permissions:
+  contents: write
+  pull-requests: write
+
+# Greptile can edit the description several times in a row. Handle the events
+# for one PR one at a time, so two runs never fight over the same PR.
+concurrency:
+  group: greptile-automerge-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  automerge:
+    # Who can start this job:
+    # - the Greptile bot (any event): the only sender that can turn auto-merge ON.
+    #   "[bot]" logins are reserved by GitHub, so nobody else can act as it.
+    # - anyone pushing commits or editing the PR (pull_request_target): these runs
+    #   can only turn auto-merge OFF (see the TRUSTED check below). Without them,
+    #   a human editing the description while auto-merge is pending would skip
+    #   the job and leave auto-merge on.
+    if: >-
+      github.event.sender.login == 'greptile-apps[bot]' ||
+      github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      PR: ${{ github.event.pull_request.number }}
+      EVENT: ${{ github.event_name }}/${{ github.event.action }}
+      SENDER: ${{ github.event.sender.login }}
+    steps:
+      - name: Read Greptile's score and decide
+        run: |
+          set -euo pipefail
+          OWNER="${REPO%/*}"; NAME="${REPO#*/}"
+          OPEN_MARK='<!-- greptile_comment -->'
+          CLOSE_MARK='<!-- /greptile_comment -->'
+
+          # Post a short PR comment once per (head commit, outcome). The hidden
+          # marker stops repeat comments when Greptile edits its summary again.
+          comment_once() {
+            local marker="<!-- greptile-automerge sha=$HEAD result=$1 -->"
+            local existing
+            existing=$(gh api --paginate --slurp "repos/$REPO/issues/$PR/comments")
+            if jq -e --arg m "$marker" 'add // [] | any(.body | contains($m))' >/dev/null <<<"$existing"; then
+              echo "Already commented: $1"
+            else
+              gh pr comment "$PR" --repo "$REPO" --body "$2"$'\n\n'"$marker"
+            fi
+          }
+
+          # Turn auto-merge off if it is on (a score that no longer applies must not merge).
+          disable_auto() {
+            if [ "$AUTO" = "true" ]; then
+              gh pr merge "$PR" --repo "$REPO" --disable-auto && echo "Auto-merge disabled"
+            fi
+          }
+
+          # GraphQL gives us "editor": the account that last edited the description.
+          # GitHub records it, so a PR author can't fake it.
+          pr=$(gh api graphql -F owner="$OWNER" -F name="$NAME" -F number="$PR" -f query='
+            query($owner: String!, $name: String!, $number: Int!) {
+              repository(owner: $owner, name: $name) {
+                pullRequest(number: $number) {
+                  state isDraft headRefOid body
+                  editor { login }
+                  autoMergeRequest { enabledAt }
+                }
+              }
+            }' --jq '.data.repository.pullRequest')
+          STATE=$(jq -r .state <<<"$pr")
+          HEAD=$(jq -r .headRefOid <<<"$pr")
+          EDITOR=$(jq -r '.editor.login // ""' <<<"$pr")
+          AUTO=$(jq -r '.autoMergeRequest != null' <<<"$pr")
+          BODY=$(jq -r '.body // ""' <<<"$pr")
+          echo "Event $EVENT on PR #$PR, head $HEAD, state $STATE, description last edited by '$EDITOR', auto-merge on: $AUTO"
+          if [ "$STATE" != "OPEN" ] || [ "$(jq -r .isDraft <<<"$pr")" = "true" ]; then
+            echo "Not an open, ready PR: nothing to do."; exit 0
+          fi
+
+          # New commits: any earlier 5/5 was for older code. Wait for Greptile to re-score.
+          if [ "$EVENT" = "pull_request_target/synchronize" ]; then
+            if [ "$AUTO" = "true" ]; then
+              disable_auto
+              comment_once "new-commits" "New commits pushed: auto-merge is off until Greptile re-scores this PR."
+            fi
+            exit 0
+          fi
+
+          # Anti-forgery check 1: the description must be exactly as Greptile last
+          # wrote it. If anyone edited it afterwards, its score can't be trusted.
+          # (GraphQL shows the bot as "greptile-apps", without "[bot]".)
+          if [ "$EDITOR" != "greptile-apps" ]; then
+            echo "Description last edited by '$EDITOR', not Greptile: not trusting any score in it."
+            if [ "$AUTO" = "true" ]; then
+              disable_auto
+              comment_once "edited" "The description was edited after Greptile's review, so auto-merge is off and this PR waits for a human merge."
+            fi
+            exit 0
+          fi
+
+          # Anti-forgery check 2: exactly one Greptile block, the score read INSIDE it
+          # only, and no score-like text anywhere else (where an author could plant it).
+          if [ "$(grep -cF -- "$OPEN_MARK" <<<"$BODY" || true)" != "1" ] || [ "$(grep -cF -- "$CLOSE_MARK" <<<"$BODY" || true)" != "1" ]; then
+            echo "Expected exactly one Greptile block (still reviewing, or tampered): nothing to do."
+            disable_auto; exit 0
+          fi
+          BLOCK=$(awk -v o="$OPEN_MARK" -v c="$CLOSE_MARK" 'index($0,o){f=1} f{print} index($0,c){f=0}' <<<"$BODY")
+          OUTSIDE=$(awk -v o="$OPEN_MARK" -v c="$CLOSE_MARK" 'index($0,o){f=1} !f{print} index($0,c){f=0}' <<<"$BODY")
+          if grep -qiE 'greptile_confidence_score|confidence score' <<<"$OUTSIDE"; then
+            disable_auto
+            comment_once "tampered" "A Greptile-style score appears outside Greptile's own summary, so this PR waits for a human merge."
+            exit 0
+          fi
+
+          # Parse the score from inside the block. First the machine-readable marker
+          # Greptile embeds (<!-- greptile_confidence_score:5 -->), then the visible
+          # "Confidence Score: 5/5" heading as a fallback.
+          SCORE=$(grep -oE 'greptile_confidence_score:[[:space:]]*[0-9]+' <<<"$BLOCK" | tail -n1 | grep -oE '[0-9]+$' || true)
+          if [ -z "$SCORE" ]; then
+            SCORE=$(grep -oiE 'Confidence Score:[[:space:]]*[0-9]+[[:space:]]*/[[:space:]]*5' <<<"$BLOCK" \
+              | tail -n1 | sed -E 's/[^0-9]*([0-9]+).*/\1/' || true)
+          fi
+          if [ -z "$SCORE" ]; then
+            echo "No Greptile score yet (still reviewing?): nothing to do."; exit 0
+          fi
+
+          # A score only counts for the commit Greptile actually reviewed. Its summary
+          # links "Last reviewed commit: .../commit/<sha>"; it must be the current head.
+          REVIEWED=$(grep -oE 'commit/[0-9a-f]{40}' <<<"$BLOCK" | tail -n1 | cut -d/ -f2 || true)
+          if [ "$REVIEWED" != "$HEAD" ]; then
+            echo "Score $SCORE/5 is for ${REVIEWED:-an unknown commit}, not head $HEAD: waiting for a fresh review."
+            exit 0
+          fi
+
+          # A PR that touches .github/ (workflows, actions, CODEOWNERS...) changes what
+          # this robot and CI are allowed to do, so a human always merges it, whatever
+          # the score. Both the new AND the old path of every file are checked, so
+          # renaming a workflow out of .github/ can't hide it. The list is fetched
+          # into a variable first: if the API call fails, set -e stops the run here
+          # instead of treating the failure as "nothing in .github/ changed".
+          FILES=$(gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[] | .filename, (.previous_filename // empty)')
+          if grep -q '^\.github/' <<<"$FILES"; then
+            disable_auto
+            comment_once "workflows-$SCORE" "Greptile confidence $SCORE/5, but this PR changes files under .github/ (workflows, CI settings), so it waits for a human merge."
+            exit 0
+          fi
+
+          # Only an event sent by Greptile itself may turn auto-merge ON. Runs started
+          # by anyone else (e.g. a human editing the title) stop here.
+          if [ "$SENDER" != "greptile-apps[bot]" ]; then
+            echo "Event sent by '$SENDER', not Greptile: this run may only turn auto-merge off."
+            if [ "$SCORE" != "5" ]; then disable_auto; fi
+            exit 0
+          fi
+
+          if [ "$SCORE" = "5" ]; then
+            # --merge = a real merge commit, so every one-sentence commit and its
+            # author stay in main's history (squash merging is disabled on the repo).
+            # --auto = GitHub merges only once ci + Greptile Review are green and the
+            # branch is up to date. This step never skips the required checks.
+            # --match-head-commit = GitHub refuses if the branch moved since we read
+            # the score, so new commits can't ride on this 5/5.
+            gh pr merge "$PR" --repo "$REPO" --auto --merge --match-head-commit "$HEAD"
+            comment_once "auto-5" "Greptile confidence 5/5: auto-merge is on. GitHub will merge once ci and Greptile Review are green."
+          else
+            disable_auto
+            comment_once "score-$SCORE" "Greptile confidence $SCORE/5, waiting for a human merge."
+          fi

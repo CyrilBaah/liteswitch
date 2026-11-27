@@ -59,8 +59,9 @@ One useful free lesson page, **"Git in 10 minutes"**, with a video, images, code
 - **Commit messages:** ONE short, plain sentence.
 - **Author and committer:** the owner's identity from global git config (`git config --global user.name` / `user.email`). If either is empty, stop and ask.
 - **No attribution:** NO `Co-Authored-By` trailer or any other attribution line in commits or PRs, ever. (`.claude/settings.json` disables Claude Code's co-author line.)
-- **Never push to `main`.** `main` is protected: a PR and a green `ci` check are required, and force pushes and deletion are blocked.
+- **Never push to `main`.** `main` is protected: a PR and green `ci` + `Greptile Review` checks are required, and force pushes and deletion are blocked.
 - **Every change:** new branch → commit → push the branch → `gh pr create` with a one-sentence title → wait for the checks to finish → tell the owner when it's green, so they can approve and merge. Don't merge on their behalf.
+- **Auto-merge:** a PR whose Greptile confidence is **5/5 on its latest commit**, with green required checks (`ci` + `Greptile Review`), auto-merges as a merge commit (`.github/workflows/greptile-automerge.yml`). Anything else waits for Cyril. PRs that touch anything under `.github/` (including renames out of it) always wait for Cyril, whatever the score. The score only counts if Greptile made the last edit to the PR description; editing the description afterwards turns the PR back into a manual merge.
 - CI (`.github/workflows/ci.yml`, job `ci`) runs lint, type-check (`tsc --noEmit`) and `next build`. Run all three locally before pushing: `npm run lint && npm run typecheck && npm run build`.
 
 ## Code comments
