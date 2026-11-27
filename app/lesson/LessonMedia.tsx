@@ -34,6 +34,8 @@ export function IntroMedia() {
           muted
           loop
           playsInline
+          // Autoplaying, looping video must be pausable, keyboard users included.
+          controls
           preload="auto"
           // First frame is on screen -> the lesson counts as visible.
           onLoadedData={() => setIntroVisible(true)}

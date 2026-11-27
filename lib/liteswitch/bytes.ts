@@ -2,11 +2,15 @@
 // using the browser's Performance API. Powers the data-cost receipt.
 
 /**
- * Price used by the receipt: 1,000 FCFA per GB.
- * Source: Orange Sénégal 1 GB internet pass at 1,000 FCFA (osiris.sn, June 2024).
+ * Price used by the receipt: GH₵0.1145 per MB (about GH₵117 per GB).
+ * Why this rate: it is MTN Ghana's official pay-as-you-go (out-of-bundle) data
+ * price, what a prepaid user pays when they have no bundle. That's the honest
+ * worst case the lite page is meant to protect people from. Bundles are cheaper.
+ * Source: MTN Ghana "Tariff review: VAT January 2026" FAQ,
+ * https://mtn4186.zendesk.com/hc/en-us/articles/32234628177298-TARIFF-REVIEW-VAT-JANUARY-2026
  * Change this one number to match another operator or country.
  */
-export const CFA_PER_GB = 1000;
+export const CEDIS_PER_MB = 0.1145;
 
 /**
  * Bytes this page has pulled over the network so far:
@@ -42,6 +46,11 @@ export function bytesTransferred(): number {
   return Math.round(total);
 }
 
-export function bytesToCfa(bytes: number): number {
-  return (bytes / 1_000_000_000) * CFA_PER_GB;
+/**
+ * Cost in Ghana cedis. Uses the same MB the footer shows (1 MB = 1,000,000 bytes)
+ * so the two numbers on screen agree. If MTN bills 1 MB as 1,048,576 bytes, the
+ * real charge is about 5% lower than shown.
+ */
+export function bytesToCedis(bytes: number): number {
+  return (bytes / 1_000_000) * CEDIS_PER_MB;
 }

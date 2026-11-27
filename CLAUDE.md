@@ -46,7 +46,7 @@ One useful free lesson page, **"Git in 10 minutes"**, with a video, images, code
 - **Fallback:** the default flag handler serves **full** if Flagsmith can't be reached.
 
 ## Extras
-- **Footer "data-cost receipt":** bytes transferred (from the Performance API) × price per GB, shown as "This page used 0.9 MB ≈ X CFA".
+- **Footer "data-cost receipt":** bytes transferred (from the Performance API) × price per MB, shown as "This page used 0.9 MB ≈ GH₵X". Price: MTN Ghana pay-as-you-go, GH₵0.1145/MB (`CEDIS_PER_MB` in `lib/liteswitch/bytes.ts`).
 - Log bytes transferred and time-to-content for each variant.
 
 ## Rules

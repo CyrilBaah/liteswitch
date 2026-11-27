@@ -1,0 +1,48 @@
+{
+  "$comment": "What to create in the Flagsmith dashboard for LiteSwitch. This is a checklist in JSON form to recreate BY HAND (Dashboard steps: README > Use LiteSwitch on your site). It is not a Flagsmith import file. Names must match exactly: the code looks them up by name.",
+  "environments": [
+    { "name": "Production", "purpose": "Real visitors. Its client-side key goes in your production site." },
+    { "name": "Development", "purpose": "Simulation and local testing. Its client-side key goes in previews and .env.local." }
+  ],
+  "warehouse": {
+    "where": "Environment Settings > Warehouse, in EVERY environment",
+    "choose": "Flagsmith (managed)",
+    "why": "Experiments can't be created until the environment has a warehouse."
+  },
+  "flag": {
+    "name": "page_weight",
+    "enabled_by_default": true,
+    "control_value": { "video": "autoplay-hd", "images": "hd", "fonts": "web", "embeds": true },
+    "variations": [
+      {
+        "name": "lite",
+        "value": { "video": "tap-to-load-360p", "images": "low-lazy", "fonts": "system", "embeds": false },
+        "weight_before_experiment": 0
+      }
+    ],
+    "notes": "Paste the values as JSON strings. Keep the flag's control value = full, so anyone outside the experiment gets the normal page. Add no segment overrides while an experiment runs."
+  },
+  "traits_sent_by_the_code": {
+    "net_type": "effectiveType: slow-2g | 2g | 3g | 4g | unknown",
+    "save_data": "true when Data Saver is on",
+    "rtt_ms": "estimated round-trip time in ms, -1 if unknown"
+  },
+  "segment": {
+    "name": "slow_or_saver",
+    "rules": "net_type IN slow-2g,2g,3g  OR  save_data = true",
+    "used_for": "AFTER the experiment: a segment override that rolls the winning value out to slow visitors only."
+  },
+  "metrics": [
+    { "event_name": "lesson_started", "measure": "Occurrence", "direction": "Higher is better", "role": "primary" },
+    { "event_name": "lesson_completed", "measure": "Occurrence", "direction": "Higher is better", "role": "secondary" },
+    { "event_name": "page_bytes", "measure": "Mean", "direction": "Lower is better", "role": "secondary: bytes per page view" }
+  ],
+  "experiment": {
+    "flag": "page_weight",
+    "rollout_percent": 100,
+    "split": "Split evenly (50/50)",
+    "primary_metric": "lesson_started",
+    "expected_direction": "increase",
+    "notes": "Rollout can be 100% because the code only ever evaluates the flag for slow visitors. Creating the experiment starts it immediately and locks the flag, so deploy the code and send a test event first."
+  }
+}
