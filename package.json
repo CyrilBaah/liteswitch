@@ -9,7 +9,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "media": "bash scripts/make-media.sh",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "simulate": "node --env-file-if-exists=.env.local scripts/simulate.ts"
   },
   "dependencies": {
     "@flagsmith/flagsmith": "12.6.0",
@@ -23,6 +24,7 @@
     "@types/react-dom": "19.3.0",
     "eslint": "9.39.5",
     "eslint-config-next": "16.4.6",
+    "playwright": "1.65.1",
     "typescript": "6.0.3"
   }
 }
