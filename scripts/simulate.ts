@@ -17,6 +17,7 @@
 // button only unlocks once the lesson's intro media is on screen, so the result
 // comes from REAL load times on a throttled connection, not from a script that
 // always clicks. These are simulated visitors: report them apart from real ones.
+import { mkdirSync, writeFileSync } from "node:fs";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
 
 // Load .env.local if it exists (process.loadEnvFile is built into Node 20.12+).
@@ -55,7 +56,17 @@ const NETWORK_3G = {
 };
 
 type Variant = "full" | "lite";
-type VisitResult = { enrolled: boolean; variant: Variant | null; started: boolean; completed: boolean };
+type VisitResult = {
+  enrolled: boolean;
+  variant: Variant | null;
+  started: boolean;
+  completed: boolean;
+  patienceMs: number;
+  /** Time from navigation until "Start lesson" unlocked (intro media on screen). null = not within patience. */
+  timeToContentMs: number | null;
+  /** Bytes the page had used when the visitor left, as shown by the page's own receipt. */
+  bytes: number | null;
+};
 
 /**
  * Allowlist, not blocklist: simulated traffic may only reach this project's Vercel
@@ -95,7 +106,10 @@ async function readFooter(page: Page): Promise<string> {
 async function visit(browser: Browser, url: URL): Promise<VisitResult> {
   const context = await newVisitorContext(browser, url.origin);
   const page = await context.newPage();
-  const result: VisitResult = { enrolled: false, variant: null, started: false, completed: false };
+  const result: VisitResult = {
+    enrolled: false, variant: null, started: false, completed: false,
+    patienceMs: 0, timeToContentMs: null, bytes: null,
+  };
   try {
     // Throttle THIS page to 3G before it loads anything.
     const cdp = await context.newCDPSession(page);
@@ -104,7 +118,9 @@ async function visit(browser: Browser, url: URL): Promise<VisitResult> {
 
     // Patience is measured from navigation start, like a real person staring at a loading page.
     const patience = PATIENCE_MIN_MS + Math.random() * (PATIENCE_MAX_MS - PATIENCE_MIN_MS);
-    const deadline = Date.now() + patience;
+    const startedAt = Date.now();
+    const deadline = startedAt + patience;
+    result.patienceMs = Math.round(patience);
 
     // ?net=3g makes the page treat us as slow (honored only on the sim deployment).
     const target = new URL(url);
@@ -133,6 +149,7 @@ async function visit(browser: Browser, url: URL): Promise<VisitResult> {
       .catch(() => false);
 
     if (clickable) {
+      result.timeToContentMs = Date.now() - startedAt;
       await start.click();
       result.started = true;
       if (Math.random() < COMPLETE_SHARE) {
@@ -149,12 +166,39 @@ async function visit(browser: Browser, url: URL): Promise<VisitResult> {
     // while the page was still "deciding" may have been enrolled by Flagsmith since,
     // and we must count them the way Flagsmith will.
     const footer = await readFooter(page);
+    // The page's own receipt ("This page used 6.50 MB"), so bytes match what visitors see.
+    const receipt = (await page.locator(".receipt p").first().textContent({ timeout: 1_000 }).catch(() => "")) ?? "";
+    const mb = receipt.match(/used\s+([\d.]+)\s*MB/);
+    result.bytes = mb ? Math.round(Number(mb[1]) * 1_000_000) : null;
     result.enrolled = footer.includes("in experiment: yes");
     result.variant = footer.includes("page: lite") ? "lite" : footer.includes("page: full") ? "full" : null;
   } finally {
     await context.close(); // closing fires pagehide, which sends page_bytes
   }
   return result;
+}
+
+const median = (xs: number[]): number | null => {
+  if (!xs.length) return null;
+  const s = [...xs].sort((a, b) => a - b);
+  return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2;
+};
+
+/** Bytes and time-to-content per variant, enrolled visitors only. */
+function printMetrics(results: VisitResult[]): void {
+  console.log("\n  Per variant (enrolled visitors):");
+  for (const variant of ["full", "lite"] as const) {
+    const rs = results.filter((r) => r.enrolled && r.variant === variant);
+    const bytes = rs.flatMap((r) => (r.bytes === null ? [] : [r.bytes]));
+    const ttc = rs.flatMap((r) => (r.timeToContentMs === null ? [] : [r.timeToContentMs]));
+    const mb = (b: number | null) => (b === null ? "-" : `${(b / 1_000_000).toFixed(2)} MB`);
+    const sec = (ms: number | null) => (ms === null ? "-" : `${(ms / 1000).toFixed(1)} s`);
+    const mean = bytes.length ? bytes.reduce((a, b) => a + b, 0) / bytes.length : null;
+    console.log(
+      `    ${variant}: bytes when leaving median ${mb(median(bytes))}, mean ${mb(mean)}; ` +
+        `content on screen within patience for ${ttc.length}/${rs.length}, median time-to-content ${sec(median(ttc))}`,
+    );
+  }
 }
 
 async function main(): Promise<void> {
@@ -173,6 +217,7 @@ async function main(): Promise<void> {
   let visits = 0;
   let notEnrolled = 0;
   let consecutiveFailures = 0;
+  const results: VisitResult[] = [];
   const done = () => tally.full.enrolled >= TARGET_PER_VARIANT && tally.lite.enrolled >= TARGET_PER_VARIANT;
 
   const browser = await chromium.launch();
@@ -197,6 +242,7 @@ async function main(): Promise<void> {
           }
           continue;
         }
+        results.push(r);
         if (!r.enrolled || !r.variant) {
           notEnrolled++;
           // Nobody enrolled after 10 visits: the experiment probably isn't running.
@@ -209,7 +255,7 @@ async function main(): Promise<void> {
         arm.enrolled++;
         if (r.started) arm.started++;
         if (r.completed) arm.completed++;
-        console.log(`visit ${visits}: ${r.variant}, started=${r.started}, completed=${r.completed}`);
+        console.log(`visit ${visits}: ${r.variant}, started=${r.started}, completed=${r.completed}, ttc=${r.timeToContentMs ?? "-"}ms, bytes=${r.bytes ?? "-"}`);
       }
     };
     await Promise.all(Array.from({ length: CONCURRENCY }, worker));
@@ -222,6 +268,12 @@ async function main(): Promise<void> {
       console.log(`  ${variant}: ${enrolled} enrolled, ${started} started (${pct(started)}%), ${completed} completed (${pct(completed)}%)`);
     }
     console.log(`  visits: ${visits}, not enrolled: ${notEnrolled}`);
+    printMetrics(results);
+    // Keep every visit on disk for the write-up (no secrets in here).
+    mkdirSync("sim-results", { recursive: true });
+    const file = `sim-results/sim-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+    writeFileSync(file, JSON.stringify({ url: url.toString(), network: NETWORK_3G, results }, null, 2));
+    console.log(`  per-visit data: ${file}`);
   }
 }
 
