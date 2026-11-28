@@ -6,10 +6,12 @@ import { VariantProvider } from "./lesson/VariantProvider";
 import { IntroMedia, StepImage } from "./lesson/LessonMedia";
 import { CompleteButton, StartButton } from "./lesson/LessonButtons";
 import { Receipt } from "./lesson/Receipt";
+import { AboutBanner } from "./lesson/AboutBanner";
 
 export default function LessonPage() {
   return (
     <VariantProvider>
+      <AboutBanner />
       <main>
         <p className="eyebrow">Free lesson · 10 minutes</p>
         <h1>Git in 10 minutes</h1>
