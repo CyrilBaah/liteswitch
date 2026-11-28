@@ -10,6 +10,18 @@ import { Receipt } from "./lesson/Receipt";
 export default function LessonPage() {
   return (
     <VariantProvider>
+      {/* Explainer banner for first-time visitors (judges, mostly). Server-rendered
+          HTML + a few lines of CSS, no JavaScript: it can't delay the variant
+          decision, the exposure or lesson_started, and adds well under 1 KB.
+          Dismiss is a CSS-only checkbox, so it reappears on reload (no cookie). */}
+      <input type="checkbox" id="about-close" className="about-toggle" aria-label="Dismiss the LiteSwitch banner" />
+      <div className="about" role="note">
+        <p>
+          <strong>LiteSwitch:</strong> this page automatically goes lite on slow or Data-Saver connections. Flagsmith
+          decides who gets which version. <a href="https://github.com/CyrilBaah/liteswitch#readme">→ How it works</a>
+        </p>
+        <label htmlFor="about-close" className="about-close" aria-hidden="true">×</label>
+      </div>
       <main>
         <p className="eyebrow">Free lesson · 10 minutes</p>
         <h1>Git in 10 minutes</h1>

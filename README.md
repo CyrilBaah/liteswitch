@@ -1,6 +1,25 @@
 # LiteSwitch
 
-An open-source "data-saver mode" for websites: visitors on slow or Data-Saver connections get a lighter page, and a Flagsmith A/B test checks whether it actually helps.
+**A data-saver mode for any website: slow or Data-Saver visitors get a lite page, and a Flagsmith A/B test proves whether it helps.**
+
+- **What:** an open-source drop-in that reads the browser's connection signals, lets a Flagsmith flag pick the full or lite page for slow visitors, and measures the result with Flagsmith Experimentation.
+- **Who:** people on 2G/3G or with Data Saver on, mostly in Africa and South Asia, who pay for every MB (GH₵0.1145/MB on MTN Ghana pay-as-you-go).
+- **Result (simulated 3G visitors, not real people yet):** **7.2% vs 79.0%** started the lesson (full vs lite), with a **> 99%** chance that lite is best, and about **6.3 MB (≈ GH₵0.72)** saved per fully loaded visit. Details in [Results](#results).
+
+```mermaid
+flowchart LR
+  V[Visitor] --> C{Connection check}
+  C -- fast or unknown --> N["Full page, not in the test"]
+  C -- "slow or Data Saver" --> P[Flagsmith flag page_weight]
+  P -- control --> F[Full page]
+  P -- lite --> L[Lite page]
+  F --> E["Events: exposure, lesson_started"]
+  L --> E
+  E --> X[Flagsmith experiment]
+  P -. "no answer in 5 s" .-> N
+```
+
+**Next steps:** publish the kit as an **npm package**, a **browser extension** that applies lite mode to any site, and a **WordPress plugin**.
 
 **Live demo:** https://liteswitch.vercel.app (a free lesson, "Git in 10 minutes")
 
