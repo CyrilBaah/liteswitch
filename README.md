@@ -164,3 +164,7 @@ When Production has enough real slow-connection visitors, compare its result wit
 - **Claude in the browser** set up the Flagsmith dashboard (flag, metrics, warehouse) and started the experiments, then checked the results.
 - **Greptile** reviewed every pull request against rules in [`.greptile/config.json`](.greptile/config.json): experiment correctness, no secrets, accessibility. Its findings fixed real bugs, including one that could have counted visitors in a variant they never saw. PRs it scored 5/5 merged themselves ([`.github/workflows/greptile-automerge.yml`](.github/workflows/greptile-automerge.yml)); anything else, and anything touching `.github/`, waited for a human.
 - **The author** (Cyril) set the brief and the rules in [`CLAUDE.md`](CLAUDE.md), made the decisions, and is the author of every commit.
+
+## License
+
+[MIT](LICENSE). Use it, copy it, ship it on your own site.
