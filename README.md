@@ -4,7 +4,7 @@
 
 - **What:** an open-source drop-in that reads the browser's connection signals, lets a Flagsmith flag pick the full or lite page for slow visitors, and measures the result with Flagsmith Experimentation.
 - **Who:** people on 2G/3G or with Data Saver on, mostly in Africa and South Asia, who pay for every MB (GH₵0.1145/MB on MTN Ghana pay-as-you-go).
-- **Result (simulated 3G visitors, not real people yet):** **7.2% vs 79.0%** started the lesson (full vs lite), with a **> 99%** chance that lite is best, and about **6.3 MB (≈ GH₵0.72)** saved per fully loaded visit. Details in [Results](#results).
+- **Result (simulated 3G visitors, not real people yet):** **7.2% vs 79.0%** started the lesson (full vs lite), with a **> 99%** chance that lite is best, and about **6.3 MB (≈ GH₵0.72)** saved per fully loaded visit. Both Flagsmith experiments are **completed**, and lite is rolled out to slow-connection visitors. Details in [Results](#results).
 
 ```mermaid
 flowchart LR
@@ -21,13 +21,13 @@ flowchart LR
 
 **Next steps:** publish the kit as an **npm package**, a **browser extension** that applies lite mode to any site, and a **WordPress plugin**.
 
-**Live demo:** https://liteswitch.vercel.app (a free lesson, "Git in 10 minutes")
+**Live demo:** https://liteswitch.vercel.app (a free lesson, "Git in 10 minutes") · **[Watch the 3-minute demo](https://youtu.be/yQRuU05rcTg)**
 
 > Built for [Toggle Wars: The Flagsmith Experimentation Hackathon](https://www.wemakedevs.org/hackathons/flagsmith) by [WeMakeDevs](https://www.wemakedevs.org), Track 01: **Test Something Real**. Feature flags and experiments are powered by [Flagsmith](https://flagsmith.com).
 
 ## Demo video
 
-**Demo video:** [Watch the 3-minute demo (link coming soon)](#demo-video) <!-- TODO: replace #demo-video with the video URL -->
+**Demo video:** [Watch the 3-minute demo](https://youtu.be/yQRuU05rcTg)
 
 ## Problem
 
@@ -61,7 +61,7 @@ For visitors on slow (≤3G) or Data-Saver connections, a lite page will get mor
 
 1. **Identity and traits.** Each slow visitor is identified by their visitor-id cookie, with the traits `net_type` (e.g. `3g`), `save_data` (true/false) and `rtt_ms`. That's one request: `flagsmith.init({ environmentID, enableEvents: true, identity, traits })`.
 2. **Flag.** The multivariate flag `page_weight` holds a JSON value. Control (full) is `{"video":"autoplay-hd","images":"hd","fonts":"web","embeds":true}`, and variation `lite` is `{"video":"tap-to-load-360p","images":"low-lazy","fonts":"system","embeds":false}`. The page reads it with `getAllFlags()`, which records nothing.
-3. **Experiment.** Flagsmith Experimentation runs `page_weight` as an A/B test: 100% rollout, 50/50 split. It runs in two environments, **Development** for simulated visitors and **Production** for real ones.
+3. **Experiment.** Flagsmith Experimentation runs `page_weight` as an A/B test: 100% rollout, 50/50 split. It ran in two environments, both now completed, **Development** for simulated visitors and **Production** for real ones.
    - **Exposure:** recorded with `trackExposureEvent('page_weight', …)` when the variant is put on the page, and only if Flagsmith says `inExperiment === true` and the flag value is one we recognise. A visitor who gives up during a heavy download still counts as "shown full, didn't start".
    - **Metrics:** `lesson_started` (primary, occurrence), `lesson_completed` (occurrence), `page_bytes` (mean bytes per page view). Each is sent with `trackEvent` under the same identity and flushed right away, because a 3G visitor may leave before the SDK's 10-second batch.
 4. **Segment rollout (after the experiment).** The segment `slow_or_saver` (`net_type` in `slow-2g, 2g, 3g` OR `save_data = true`) is for shipping the winner. A segment override sets `page_weight` to the winning value for slow visitors only, and everyone else keeps the full page.
@@ -122,7 +122,7 @@ Simulated and real visitors are reported **separately**. All figures below come 
 - Each also got a random **patience of 3–15 s** (9 s on average), counted from page load. It clicked "Start lesson" only if the content appeared within that time; otherwise it left.
 - These are not people. The test shows how load time interacts with a plausible range of patience.
 
-**Flagsmith's analysis** (experiment "Lite page for slow connections (Simulation)", as of 27 Nov 2026 09:55 UTC):
+**Flagsmith's analysis** (experiment "Lite page for slow connections (Simulation)", final numbers, 27 Nov 2026 09:55 UTC; the experiment is now **completed**):
 
 | | Full (control) | Lite |
 |---|---|---|
@@ -161,11 +161,13 @@ The credible interval is entirely above zero; it doesn't cross it. Flagsmith sho
 
 ### Real visitors (Flagsmith Production environment)
 
-The Production experiment is running at https://liteswitch.vercel.app, but it has **0 exposures** so far: no real slow-connection visitors have been enrolled yet. Fast visitors and Safari/Firefox visitors get the full page and are, by design, never enrolled. So there is **no real-world result yet**, and the simulated result above should not be read as one.
+The Production experiment at https://liteswitch.vercel.app is **completed** with **0 exposures**: no real slow-connection visitors were enrolled while it ran. Fast visitors and Safari/Firefox visitors get the full page and are, by design, never enrolled. So there is **no real-world result**, and the simulated result above should not be read as one.
+
+**Lite is rolled out in Production anyway, based on the simulation:** slow-connection visitors now get the lite page, and everyone else keeps the full page. That is a judgement call, not a measured result: the simulation showed a large, confident win, and lite's downside for a slow visitor is small (a poster instead of an autoplaying video they can still tap to play).
 
 ### What we'd do next
 
-When Production has enough real slow-connection visitors, compare its result with the simulation. If lite still wins, roll it out with a segment override on `slow_or_saver`: slow visitors get lite, everyone else keeps the full page.
+Run a new Production experiment once there is enough real slow-connection traffic, and check that real people behave like the simulation. If they don't, roll lite back with one flag change.
 
 ## Limitations
 
@@ -174,7 +176,7 @@ When Production has enough real slow-connection visitors, compare its result wit
 - **Simulated visitors aren't people.** Their patience (3–15 s) is our assumption. They show how load time interacts with patience, not how humans behave, which is why their results are reported apart from real visitors.
 - **Bytes are partly estimated.** Browsers don't report a video that's still streaming, so the receipt estimates video bytes from how much has buffered. A visitor who leaves early also pays for less than the full page weight.
 - **The price is a worst case.** GH₵0.1145/MB is MTN Ghana's no-bundle rate; bundles cost less. The receipt counts 1 MB as 1,000,000 bytes, so if MTN bills 1,048,576 bytes per MB the real charge is about 5% lower.
-- **No real sample yet.** The Production experiment has had 0 slow-connection visitors so far, so the only result is the simulated one.
+- **No real sample.** The Production experiment completed with 0 slow-connection visitors, so lite was rolled out on the strength of the simulated result alone.
 - **Flagsmith Experimentation is in beta.**
 
 ## How AI tools were used
